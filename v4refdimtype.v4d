@@ -85,7 +85,7 @@ Desc
 IPar	"The BigText dimension type is used for incorporating large amounts of text into a V4 point. A V4 Alpha point is limited to slightly over 2000 characters. \
 The maximum length of a BigText point is about 32,000 characters."
 Syntax
-IPar	"BigText text can span multiple lines so a beginning and ending delimiter is necessary. V4 uses a psuedo-XML format \
+IPar	"BigText text can span multiple lines so a beginning and ending delimiter is necessary. V4 uses a psuedo-XML format (&lt;<i>tag</i>&gt;...&lt;/<i>tag</i>&gt;) \
 to describe and delimit BigText points."
 IPar	"BigText strings may also be input as simple quoted text strings."
 IPar	"The <b>explicit</b> coercion of a BigText point to a list results in a list of Dim:Alpha points corresponding to each \
