@@ -1,0 +1,1505 @@
+CmdFuncCat	Database	Database and Files
+CmdFuncCat	Debug	Debugging
+CmdFuncCat	Macro	Macros and Conditionals
+CmdFuncCat	V4	V4 Components
+Intro	Commands	Conventions
+IPar	"The V4 evaluator is a text command driven interpreter. It is used to both load bindings into V4 areas and to evaluate intersections, usually with bindings and information previously loaded."
+Section	Command Format
+IPar	"All commands in V4 are of the form:"
+EX	"Command arguments"
+IPar	"where Command is the V4 command and arguments is the argument string for the command. Commands are usually a single line with the end-of-line indicating the end of the command. However there are cases where multiple lines are required. V4 can usually determine this from the syntax. In several rare cases, V4 cannot determine the end of a command and a semi-colon must be used to end the command. Note that this is true of all commands embedded within a macro."
+Section	Abbreviations
+Index	abbreviation	General	Str("v4refconcepts.htm#Section" SectionId*)	command	General
+Ipar	"Commands may be abbreviated to the shortest unambiguous string. 'Evaluate' can be abbreviated to 'Ev', 'Dimension' to 'D'. In general, it is a good idea to use at least the first three characters for readability."
+Section	Comments
+Index	comments	General	Str("v4refconcepts.htm#Section" SectionId*)	command	General
+IPar	"Comments may be included anywhere by enclosing them in '/*' and '*/'. Any line beginning with an exclamation point '!' is also treated as a comment line. The one exception to this are lines beginning with '!{/' and '!}/' which are also considered macro header and trailer lines, not comments. This is used as a compatibility feature between V3 and V4."
+Section	Device Logicals
+Index	logical device	General	Str("v4refconcepts.htm#Section" SectionId*)	command	General
+IPar	"Logical device names may be specified on any file references within V4. A logical device is a name followed by a colon which precedes \
+the filename and replaces the usual device-directory path of the filename. Logicals allow the V4 designer to re-target files \
+to different directories without having to change any V4 code. Logicals also allow V4 code to be ported to many different operating systems \
+without having to worry about the operating system specific syntax."
+IPar	"On VMS systems, logicals are handled directly by the operating system. On Unix systems, logicals are defined as symbols within the \
+shell and become part of the V4 process environment. On NT systems logicals are defined either in the registry or as symbols in the command shell. \
+In Windows95/98 symbols are defined in the command shell."
+IPar	"When a logical specifies multiple directories, V4 searches in the order the \
+directories are listed. When a new file is to be created, V4 will first search all directory paths looking for an existing file. If one is found, \
+it is replaced. If no file is found then a new file is created in the first directory path."
+IPar	"The V4 startup switch '-s' may be used to define logicals for the duration of a V4 process. The command <a href='v4refcommands.htm#Command:Set Logical'>Set Logical</a> \
+may also be used to (re)define logicals within a V4 process."
+Section	Macros
+Index	macro	General	Str("v4refconcepts.htm#Section" SectionId*)	command	General
+IPar	"Macros may be defined within the V4 interpreter by enclosing one or more V4 commands within a macro body. The format of a macro is-"
+EX	{/<i>macroname</i>( <i>argumentlist</i> )
+EX	<i>macro body - one or more V4 commands</i>
+EX	}/<i>macroname</i>
+IPar	"Note that the " Param:macroname " must be given to both begin and end the macro. The " Param:argumentlist " is an optional list of dummy arguments. \
+Multiple arguments are separated with commas."
+IPar	"A macro is invoked as if it were a V4 interpreter command. A macro invocation must include both the macro name immediately followed by a left parenthesis. \
+If the macro call does not involve arguments then a right parenthesis follows the left parenthesis. Arguments may be any valid V4 lexical token. \
+If macro argument consisting of multiple tokens must be enclosed within '<...>'. If the argument includes a '>' then the argument may be enclosed within '<<...>>'. \
+A null argument may be specified as '<>' (see the 'If Defined' command)."
+IPar	"Arguments may be specified in the order in which they appear in the declaration or named with the '" Param:name "=" Param:value "' construct. \
+If all the macro arguments begin with the same letter then that letter may be omitted when using the " Param:name "=" Param:value " construct. \
+This can be useful as it allows one to create unique argument names (that do not conflict with similar V4 points) yet allow \
+the caller of the macro to use the normal spelling."
+IPar	"There are two special constructs allowed within the " Param:argumentlist ". The first is the '*'. When this is given then additional arguments may be included in a \
+macro call (i.e. arguments that are not defined within the formal argument list. Any/all of these arguments are aggregated into a single list and may be referenced within the \
+macro as 'udaList' (<b>u</b>n<b>d</b>efined <b>a</b>rgument <b>list</b>). A general syntax for these arguments is allowed. The format is: name[.name ...]=value where name is either a \
+simple name or dim:value. Any number of these may be concatenated together with the dot construct. See the examples below for typical usage."
+IPar	"The udaList value is actually a list of lists. Each sublist within udaList represents a single argument. The sublist is itself a list of two values. The first value represents the left-hand \
+side of the argument assignment, the second is the value of the argument assignment. See the examples below for typical usage."
+IPar	"The second special construct within the " Param:argumentlist " is '...'. When this is given then '...' is allowed within the macro call. All subsequent text on the next and subsequent line \
+is considered to be a single " PntType:BigText " value which continues until '&lt;/<i>macroname</i>> is encountered. The string may be referenced as 'btArg' within the macro. Any of the " PntType:BigText " options (ex: Javascript) may follow the ..."
+IPar	"Macro arguments are not evaluate as part of the macro call. You can force the evaluation of a macro argument by prefacing it with a backquote (`)."
+IPar	"If a reference to a macro argument (within the macro body) is followed with a dollar sign ('$') then the argument is converted to a V4 string. If the argument is \
+followed by two dollar signs ('$$') then the argument is converted to a form that is suitable as the argument to another macro."
+EXML	"Macro with Optional Arguments"
+ML	/* Use common prefix "a" for arguments (ex: aDD argument not confused with NId:NN in [DD Func*]) */
+ML	{/DESC(aText, aExample, aDD)
+ML	If Defined aText
+ML	&nbsp;Context Add Desc:{new}
+ML	&nbsp;Bind [Func Desc*] Func*
+ML	&nbsp;Bind [Text Desc*] Alpha:aText
+ML	End
+ML	If1 Defined aExample Bind [Example Func*] Alpha:aExample
+ML	If1 Defined aDD Bind [DD Func*] Alpha:aDD
+ML	}/DESC
+EXWD	DESC("This is a desc")	Only the aText argument is defined
+EXWD	DESC(<>,"An example")	Only the aExample argument is defined
+EXWD	DESC(Example="An Example")	Equivalent to the prior example
+EXML	"Macro with Associated multi-line text argument"
+ML	{/hce(aName,aHCL,aDesc,...)
+ML	Context Push macroFrame 
+ML	Context Add vac+
+ML	Bind vac.type hce
+ML	Context Add hce:aName
+ML	Point hce aName
+ML	Bind hce.vac vac*
+ML	Bind hce.name aName
+ML	If1 defined aHCL Bind hce.hcl hcl:aHCL
+ML	Bind hce.desc aDesc
+ML	If1 defined bTArg Bind hce.text vbt:btArg
+ML	Context Pop macroFrame
+ML	}/hce
+ML	/* Example macro reference */
+ML	hce(rptCCPReview,desc="CSS for CheckPoint Review Report",...
+ML	table { empty-cells: show; border-collapse: collapse; background: transparent ; font-family: Arial; font-size: smaller ; border: 1px solid white; }
+ML	td { border: 1px solid darkgrey; padding: 2px; }
+ML	a:link { text-decoration: none; color: transparent }
+ML	a:visited { text-decoration: none; color: transparent }
+ML	a:hover { text-decoration: underline }
+ML	</hce>
+EXML	"Macro with Undefined Arguments"
+ML	{/dtd(aName,aV4Type,aDimOptions,aDesc,aHSE,aDefault,*)
+ML	Context Add vac+
+ML	Bind vac.type dtd
+ML	Context Add dtd:aName
+ML	Point dtd aName
+ML	Bind dtd.vac vac*
+ML	Bind dtd.v4Type aV4Type
+ML	If1 defined aDimOptions Bind dtd.dimOptions aDimOptions
+ML	Bind dtd.desc aDesc
+ML	If1 defined aHSE Bind dtd.hse aHSE
+ML	If1 defined aDefault Bind dtd.default aDefault
+ML	If1 defined udaList Eval Enum(udaList @BindEE(MakeQI(dtd* `List.1) List.2))
+ML	}/dtd
+ML	DTD(dtdUTime, v4Type=UTime, Desc="Generic Time",default="0:00",hse=verifyTime,
+ML	&nbsp;&nbsp;&nbsp;vas:table.source:MIDAS.format=internal,
+ML	&nbsp;&nbsp;&nbsp;vas:html.defaultValue="DEFAULT ''",vas:html.hEvent:onblur=<hse:verifyTime>,
+ML	&nbsp;&nbsp;&nbsp;vas:xdb.dbEngine:mySQL.colDef="Time",vas:xdb.dbEngine:mySQL.colDefault=NULL,
+ML	&nbsp;&nbsp;&nbsp;vas:table.default=none)
+ML	&nbsp;
+ML	The value of udaList in the above call is-
+ML	(((vas:table source:MIDAS FORMAT) internal) ((vas:html DEFAULTVALUE) "DEFAULT ''") ((vas:html hEvent:onblur) hse:verifyTime) ((vas:xb dbEngine:mySQL COLDEF) "Time") ((vas:xdb dbEngine:mySQL COLDEFAULT) NULL) ((vas:table DEFAULT) None))
+CMD	Aggregate	Create and Store a Data Aggregate	Database
+CUsage	Aggregate	"< storagept value1 value2... > Error erropt"
+CUsage	Aggregate	"< #tablename# > Error erropt"
+Params	storagept	"The point used to store the aggregate. This point is not part of the aggregate and may not be extracted by the " intmod:AggVal " module (i.e. repeat/duplicate the point to be able to reference it.)"
+Params	value<sub>n</sub>	"A value point. This may be any type of V4 point. If the point is an intersection then it is evaluated (use the quote '@' to insert an intersection into an aggregate). If 'dim*' is specified then the current value of the dimension is used."
+Params	ERROR	"If given, then the following keyword specifies the error handling option."
+Params	erroropt	"How errors are to be handled, one of: Warn (default) to output warning message, Ignore (to silently ignore all errors), Abort to abort V4 on an error."
+Params	Out	"If given then the following " Param:id " specifies the area to written into."
+Params	id	"The id of the area (see the " TagName:Id " tag of the " IntMod:V4 " module or the <b>Id</b> option of the " Command:Area " command."
+Desc
+IPar	"The " command:Aggregate " command is used to combine multiple V4 points into a single aggregate entity and \
+store that entity in an area designated for " command:Aggregate "s or in an area with bindings. An aggregate is similar \
+to a traditional database record in that multiple fields (or points) are stored (referenced) by a single key (point). \
+The " intmod:AggVal " module is used to extract individual points from an aggregate created by any of the aggregate commands."
+IPar	"The " command:FAggregate " (Fixed-length-Aggregate) command is identical to " command:Aggregate " except it may \
+only be used when each aggregate results in the same structure. This is usually the case except when alpha points are included in the aggregate. \
+Unless each of the alpha points is the same length, aggregates containing strings cannot be used with the " Command:FAggregate " command \
+(the " Command:Column " parameters " Param:FixedLength " and " Param:FWidth " may be used to ensure fixed length alpha fields.) \
+The benefit of the " command:FAggregate " command over " command:Aggregate " is that the internal structure of the \
+aggregate is stored once, not with each individual aggregate. This, obviously, can result in a tremendous performance \
+boost - both in disk space used and access times."
+IPar	"The " command:BFAggregate " (Blocked-Fixed-length-Aggregate) is one step beyond the " command:FAggregate " in \
+that not only are all the aggregates fixed length, but it is assumed that the aggregates are loaded in ascending key \
+order. With this assumption, V4 is able to block or group-together many aggregates into a single keyed record. \
+Again there is a tremendous performance boost by doing this. Note that the " PntType:AggRef " point type can be used \
+with the " command:BFAggregate " command to ensure that points are generated in ascending order."
+IPar	"Aggregates are integrated with V4 Tables. The contents of a Table can be easily included within an aggregate \
+by specifying the table name enclosed in cross hatches ('#'). All columns of the table will be included in the \
+aggregate except those marked with the Ignore option. See the " Command:Table " command for more information and an example."
+IPar	"In most cases the values in a given aggegate position are all of the same dimension. It is possible, \
+with Tables, to have more than one dimension in a single position. When this is done, the " intmod:AggVal " module \
+must specify all possible dimensions. Again, see the " Command:Table " command for more details."
+Section	Multi-Area Aggregates	Macros
+IPar	"There are certain classes of data that are continuously being created. Sales data is a good example- each day new sales data is created but sales from prior days never changes. In many database systems, this type of data has to be consider one set or the user of the data has to take special care to scan multiple datasets."
+IPar	"With the V4 " PntType:AggRef " point, system designers can load historical information once into one area and then keep a much smaller, current area up to date with recent information. When these areas are concurrently open in V4, the runtime system will automatically see all of the points in all of the areas."
+IPar	"For instance consider two areas- SalesHis, which is updated once a quarter with all wanted sales history and another area, SalesCur, which is updated daily with current sales history. Both areas use the following dimension as the storage point for the aggregates-"
+EX	Dimension SlsHis AggRef
+IPar	"Then with the following example-"
+EX	"Area Read SlsHis Aggregate"
+EX	"Area Read SlsCur Aggregate"
+EX	"Tally(SlsHis..  whatever...   )"
+IPar	"The reference to SlsHis.. would include all points in SlsHis and SlsCur."
+Examples
+EX	"Aggregate < Cus* 'Cus123' 'The Smith Company' State:PA Money:123.33 >"
+IPar	"In this example, four points are stored in a aggregate record referenced by the point 'Cus*'. "
+CMD	BFAggregate	Create and Store a Blocked Fixed Data Aggregate	Database
+CUsage	BFAggregate	"< storagept value1 value2... >"
+CUsage	BFAggregate	"< #tablename# >"
+Params	storagept	"The point used to store the aggregate. This point is not part of the aggregate and may not be extracted by the " intmod:AggVal " module (i.e. repeat/duplicate the point to be able to reference it.)"
+Params	value<sub>n</sub>	"A value point. This may be any type of V4 point. If the point is an intersection then it is evaluated (use the quote '@' to insert an intersection into an aggregate). If 'dim*' is specified then the current value of the dimension is used."
+Desc
+IPar	"See the " Command:Aggregate " command for a discussion of this and other aggregate-related commands."
+CMD	FAggregate	Create and Store a Data Aggregate	Database
+CUsage	FAggregate	"< storagept value1 value2... >"
+CUsage	FAggregate	"< #tablename# >"
+Params	storagept	"The point used to store the aggregate. This point is not part of the aggregate and may not be extracted by the " intmod:AggVal " module (i.e. repeat/duplicate the point to be able to reference it.)"
+Params	value<sub>n</sub>	"A value point. This may be any type of V4 point. If the point is an intersection then it is evaluated (use the quote '@' to insert an intersection into an aggregate). If 'dim*' is specified then the current value of the dimension is used."
+Desc
+IPar	"See the " Command:Aggregate " command for a discussion of this and other aggregate-related commands."
+CMD	CAggregate	Create and Store a Data Aggregate	Database
+CUsage	CAggregate	"valpt"
+Params	valpt	"The value point to be stored in the currently write-able aggregate area. Any point type may be written. Only one point from a given \
+dimension may be written to a particular area."
+Desc
+IPar	"The " command:CAggregate " command is used to create a 'constant' value for all aggregates in an area. \
+A typical example would be a sales history aggregate where each record in an are was from a given month. \
+Rather than duplicate the month value for every record in the aggregate, one " command:CAggregate " command could be \
+given. " command:CAggregate " values are retrieved with the " intmod:AggVal " primitive by specifying the aggregate key \
+and dimension, but no index."
+Examples
+EX	"CAgg UMonth:0302"
+CMD	Area	Open/Create a V4 Area	Database
+CUsage	Area	"access area option(s)"
+Cusage	Area Close	"area"
+CUsage	Area Rename	"area newarea options(s)"
+CUsage	Area Rebuild	"area newarea options(s)"
+CUsage	Area Index	"area options(s)"
+CUsage	Area Reset	"extdict options(s)"
+CUsage	Area	"isct"
+Params	access	"How the area is to be accessed, see below for list of valid values."
+Params	area	"The file to be accessed. If the " Param:area " is not enclosed in quotes it is assumed to be " param:area ".v4a."
+Params	option	"One or more additional attributes/options, see below for a list"
+Params	newarea	"A new file to be created from the existing (Rename/Rebuild only)."
+Params	extdict	"The path name of an external dictionary file to be reset."
+Params	isct	"The intersection " Param:isct " is evaluated and the resulting string is parsed as the arguments to the command. If \
+the result is Logical:False or the empty string then no action is taken."
+Desc
+IPar	"The " Command:Area " command creates or accesses an existing V4 area. The access keyword determines the type of access. One of the following is permitted."
+Opt	Close	""	"Close the area. This should be done just before exiting from V4."
+Opt	Create	""	"Create a new area. See the option list below."
+Opt	CreateIf	""	"Create a new area only if it does not already exist. If it exists then open for Update access."
+Opt	Index	""	"Create a new index for the area. This is for use after creating an area with the FastAdd option."
+Opt	ORead	""	"Same as the Read option but no error is generated if the area does not exist (<b>O</b>ptional<b>Read</b>)."
+Opt	Read	""	"Open an existing area for read-only access."
+Opt	Rebuild	""	"Rebuild an area. This copies the area into a new area."
+Opt	Rename	""	"Rename the area."
+Opt	Reset	""	"Resets an external dictionary file. The file is first backed up with the extension '.old'. Then \
+a new version is created containing <b>only</b> dimension information. All other dictionary entries are removed."
+Opt	Update	""	"Open an existing area for read and write access."
+IPar	"The file specification (area) may be a keyword or a quoted string. If it is a keyword then it is assumed to be a file with extension '.v4a' in the current directory. A file enclosed in quotes may be any valid file path specification as allowed by the host operating system. Note that logicals are permitted and are supported on all operating systems. The following table lists other Area options."
+Opt	Aggregate	""	"Open the area for aggregates only. This area will be the destination for all aggregate records created with the " command:Aggregate " command."
+Opt	BucketSize	bytes	"Create a new area with a bucket size of bytes. Normally, the default bucket size if sufficient."
+Opt	Dictionary	""	"The area to be accessed or created is a V4 dictionary."
+Opt	FastAdd	""	"Used with the " command:Aggregate " on a new area. This tells V4 to write aggregates to the data portion of the area and not to update the index. When creating large aggregates, this is much faster. Note that an 'Area Index' command must be given to create an index structure for the area."
+Opt	Hierarchy	num	"Specifies the hierarchy number for the area. All concurrently opened V4 areas must have a different hierarchy number. The permitted range is from 1 to 8. The default is 5."
+Opt	Id	name	"Associates the unique " Param:name " with this area. This " Param:name " may be later referenced via the " TagName:Out " argument in the " IntMod:AggPut " module and the \
+'Out' options in the " Command:Agg " and " Command:Bind " commands."
+Opt	Locks	""	"This option only applies to external dictionary files opened for update access. If specified then multiple processes can access and update the external dictionary file simultaneously."
+Opt	NewMacro	name	"The name of a macro to be invoked if this is a new area. This macro may be used to initialize the area."
+Opt	OnError	FAIL	"Exit V4 immediately if any errors occur within the command."
+Opt	OnError	IGNORE	"If any errors occurs, output a warning but continue without generating an error."
+Opt	OnError	file	"Execute an Include on the V4 " Param:file " if any errors occur as a result of executing this command."
+Opt	Retry	number	"Specifies the " Param:number " of times to retry on an 'Area Open' or 'Area Rename'. This option is to be used when the target file may be busy (open). \
+If the initial rename fails, V4 will sleep for one second and retry. This will repeat until the command is successful or the retry limit is exhausted. The default value for this is 3."
+Opt	Scan	""	"Optimize the access to the area for sequential scanning of the entire area."
+IPar	"Multiple areas can be concurrently accessed within a V4 process. No two areas may have the same Hierarchy number however. This number is used to indicate the parent-child relationships among concurrent areas. Areas with higher numbers are parents to those with lower numbers. This ordering is critical for the synchronization of area dictionaries. All " PntType:Dictionary " dimension entries within an area are stored as numeric values. As an area is being created, source words are converted to numeric values by searching the current area dictionaries. The ordering is from highest hierarchy number to lowest."
+IPar	"Dictionary synchronization problems can occur in V4 applications containing multiple areas, especially with multiple aggregate areas. Once an area is created in the context of a parent area, its dictionary entries are set. If the parent is recreated at a later time, its dictionary entries may change which could invalidate the entries in the child area. There are two ways to circumvent this problem. The first is to rebuild all V4 areas. This method is reliable but can be very costly from a systems resource standpoint."
+IPar	"The other solution is with V4 dictionary areas. A dictionary area is a standalone area containing just dictionary entries. \
+Once a dictionary entry is created, all subsequent area builds should reference this area. Common entries remain constant and thus child areas and \
+aggregates do not have to be reconstructed each time a parent area is rebuilt."
+IPar	"The OnError option is used to force V4 to evaluate commands within another file if errors occur while attempting to \
+load the specified area(s). Typically, the loading of areas is used to initialize the V4 runtime environment so that if \
+errors occur there is no environment and hence any type of error recovery is difficult. The OnError include file can be then \
+read in to initialize a new (safe) environment and presumably return a reasonable error condition."
+IPar	"The " Command:Area " command with no arguments is permitted. No action is taken."
+Examples
+EX	"Area Create DataArea data Aggregate FastAdd"
+EX	"..."
+Ex	"Area Close"
+EX	"Area Index data"
+IPar	"This example creates a new area 'data.v4a' as an aggregate. The FastAdd option prevents the creation of an index. After all records have been added, the area is closed and the index created."
+CMD	Bind	Bind Intersection to a Value	V4
+Index	EBind	Command	Str("v4refCommands.htm#Command:Bind")
+CUsage	Bind	"(factor) isct = value"
+CUsage	Bind	"(factor) isct <- value"
+CUsage	EBind	"arguments identical to those of Bind"
+Params	factor	"An optional factor for the weighting factor used to prioritize bindings."
+Params	isct	"The intersection to be bound."
+Params	=	"An optional equal-sign may be used as a delimiter between the intersection and value."
+Params	<-	"This optional token, when used, disables the 'Replacing existing binding...' warning."
+Params	value	"The value point to be associated with the intersection."
+Desc
+IPar	"The " command:Bind " family of commands binds an intersection to a value. The " command:Bind " command takes the \
+value point, as is, and binds it to " param:isct ". " command:EBind " differs in that if value is itself an \
+intersection, " command:EBind " will first evaluate it and bind the evaluated result to " param:isct ". \
+(The " command:Bind " command is equivalent to the " intmod:BindQQ " primitive, the " command:EBind " command is \
+equivalent to the " intmod:BindQE " primitive.)"
+IPar	"A weighting " Param:factor " may be specified as part of the bind command. If given it must be enclosed in parentheses. \
+The " Param:factor " may be prefaced with a + or - indicating a plus or minus off the calculated weight to be assigned. \
+Or the " Param:factor " may be a plain number indicating the specific weighting factor. "
+IPar	"Be sure to see the section on BindEval for a discussion on when a bind may not be a bind."
+Examples
+EX	"Bind [MgrName Cus..] [Name [Manager Cus.SlsRep] ]"
+EX	"EBind [MgrName Cus*] [Name [Manager Cus.SlsRep] ]"
+IPar	"The first example binds an intersection to an intersection. The effect is that the MgrName of any customer is found by evaluating the name of the manager of the salesrep for that customer. The second binding is for a particular customer (the one in the context). The EBind is going to evaluate the 'name of the manager of the salesrep for the customer' and bind the result to [MgrName customer]."
+CMD	Clipboard	Copy File to Client Clipboard	V4
+CUsage	Clipboard	file
+Params	file	"The file to be copied to the clipboard."
+Desc
+IPar	"This command simply copies the specified file to the clipboard associated with the currently running V4 process. The command has no effect on systems that do not support a clipboard."
+Examples
+EX	"Clipboard 'result.tmp'"
+CMD	Column	Define a Table Column	Database
+CUsage	Column	"name dimension options"
+CUsage	Column	"name dimension options , name dimension options , ..."
+Params	name	"The column name. This becomes a psuedo context value within the macro handling the row."
+Params	dimension	"The dimension associated with the column. If the dimension is specified as an asterisk (*) then the dimension name is assumed to be identical to the column name."
+Params	options	"Any of the options described below"
+Desc
+IPar	"A Column command is used to define each column in a table."
+Opt	Acceptor	isct	"If defined, then insert the text value of the column into the context on Dim:Alpha and then evaluate " Param:isct ". \
+The resulting value is taken as the column point value."
+Opt	After	str	"Only take the portion of the column that appears after " Param:str ". If " Param:str " does not appear in the column then the entire column is used as-is."
+Opt	AggKey		"Removes the column from the #table# list within the Loop command but include the column within the aggregate."
+Opt	BaseYear	year	"Assume that " Param:year " is the base year for this date field."
+Opt	Before	str	"Only take the portion of the column that appears before " Param:str ". If " Param:str " does not appear in the column then the entire coumn is used as-is."
+Opt	Decimals	num	"The number in this column has " Param:num " implied decimal places."
+Opt	Default	value	"A default " Param:value " to be used if the column entry is blank for a given row."
+Opt	Description	text	"An optional description of the column. This attribute is referenced with the #x# parameter in a Loop."
+Opt	Dim 	dim	"An alternate dimension for the column. If the column value cannot be parsed as a point on the primary dimension, then this dimension is attempted."
+Opt	End	index	"The ending character " Param:index " for the column."
+Opt	Error	value	"A value to be used if the column entry for a row cannot be properly parsed for the given dimension. If not specified and the column value cannot be parsed then a V4 error is generated and the entire row is skipped."
+Opt	Expression	value	"A V4 point to be used as the value of this column. See discussion below for more information."
+Opt	FixedLength	num	"The resulting column value is to be truncated/padded to num characters. This option is used to convert a variable length column to a fixed length."
+Opt	Format	type	"The format of the column value. The allowed types are described in the section below."
+Opt	FWidth	length	"A combination of the Width and FixedLength options."
+Opt	Ignore		"Ignore the contents of this column. The dimension should be Alpha for columns of this type. Ignored columns are not included in any #tablename# macro expansions."
+Opt	Lowercase		"Convert the column to all lowercase."
+Opt	Mask	pattern	"Defines an inclusion pattern mask for this column. The " Param:pattern " may be a list of numbers from 1 through 32. See discussion below."
+Opt	Missing	point	"Defines a point value to be used if the aggregate value is missing. See also the " IntMod:AggVal " module and " Command:Loop " \
+command."
+Opt	NPTable		"This column defines the macro to be invoked to process the row. No prefix (NP) is assumed in the macro name."
+Opt	Offset	num	"Add the offset " Param:num " to the value of the column."
+Opt	Point	point	"Use " Param:point " as the value for this column and not a value taken from the table source data. It is recommended that the " Param:point " be \
+specified as a string. This option can be used to add context points and/or evaluated expressions to a table. The column name and/or evaluated " Param:point " is \
+included in all #<i>tablename</i># expansions."
+Opt	Prefix	str	"Insert " Param:str " as a prefix to the value found in the column. For example if the column references a two digit year and all years are the twentieth century then use 'Prefix 19'. \
+The prefix for telephone points has a slightly different use. If a telephone number does not contain an areacode and a " Option:Prefix " is specified then the prefix is used \
+as the areacode."
+Opt	Quoted		"Normally, if a TAB or CSV delmited column begins with a double-qoute, then the leading quote is removed, two double-quotes are \
+treated as single quote and the trailing double-quote is removed. If this option is given and the column entry begins with a quote then \
+the leading and trailing quotes are left intact as well as any embedded quotes."
+Opt	Scale	num	"Scale (multiply) the value of the column by " Param:num "."
+Opt	Skip	col	"Skip this column an " Param:col "-1 columns to the right of this column."
+Opt	Start	index	"The starting character index for the column. If " Option:End " or " Option:Width " is given with no Start \
+then the character after the last column is defaulted. If not width or end is specified then the width/end is determined by \
+taking the starting position of the next column and subtracting one."
+Opt	Substitution	new=old,...	"The option permits one to specify multiple value substitutions on a column. The " Param:old " value is substituted with the " Param:new " value."
+Opt	Suffix	str	"Append the " Param:str " to the end of colum value."
+Opt	Table		"This column is used to determine the real table to parse the row. The value of the column is appended to the name of this column to form a new table name. This table is then used to parse the row."
+Opt	Trim		"Trim leading and trailing white space from the field."
+Opt	UOM	id	"Assume that this unit-of-measure field has a UOMId of " Param:id "."
+Opt	Uppercase		"Convert the column to all uppercase."
+Opt	Width	length	"The total length, in characters, of the column"
+Section	The difference between Point And Expression
+IPar	"Both the " Option:Point " and " Option:Expression " options define a value for the column. The column value is NOT to be taken from any input source file (via " Command:Include "). A column with \
+the " Option:Point " option is assumed to be included in any aggregates created as part of the table processing. A column with the " Option:Expression " option is not included in aggregate output. \
+For this reason, columns with the " Option:Point " option are included in #<i>tablename</i># expansion within one of the " Command:Aggregate " commands."
+Section	Masking Columns
+IPar	"It is possible to partition columns in a single table into multiple sub-groups. This may be usefull for moving information from one table into \
+several different aggregates and/or perform different processing on different groups of columns. Each column may be tagged with a mask consisting of \
+integers from 1 to 32. A column with no mask is assumed to have all 32 entries tagged. The column groups may be referenced with the #<i>tablename</i># \
+construct. For example #dataTable:3# would reference all of the columns in dataTable tagged with <b>Mask:3</b>."
+EXML	"Output of Single Table to Two Aggregates"
+ML	Table demoCus Macro demoCus CSV
+ML	 Col id cusId FixedLength 16 Mask 1
+ML	 Col isTest Logical Error FALSE Default FALSE Mask 1
+ML	 Col name Alpha FixedLength 30 Mask 2
+ML	 Col address1 Alpha FixedLength 30 Mask 2
+ML	 Col address2 Alpha FixedLength 30 Default "" Mask 2
+ML	 Col attr Int Default 0 Mask 1
+ML	 Col billto cus Default cus:0 Mask 1
+ML	 Col branch * Default branch:kbf Mask 1
+ML	 Col city Alpha FixedLength 30 Mask 2
+ML	 Col zip * Default zip:0 Mask 1
+ML	EndTable
+ML	{/demoCus()
+ML	Context Add Str(Id* ListOf::"-" Trim?) ;	/* id = xxxx-xxx-xxx */
+ML	Context Add cus:={Num:=List.1 * 1000000.0 + Num:=List.2 * 1000.0 + Num:=List.3} ;
+ML	Context Add cusA:=cus* ;
+ML	Point cus cus* ;
+ML	BFAgg &lt;cus* #demoCus:1#> ;	/* Non-text goes into this agg */
+ML	BFAgg &lt;cusA* #demoCus:2#> ;	/* text (reference) into this agg */
+ML	}/demoCus
+ML	Loop #demoCus:1# Bind [cus.. #c#] AggVal(cus* Dim:#d# #i#)
+ML	Loop #demoCus:2# Bind [cus.. #c#] AggVal(cusA:=cus* Dim:#d# #i#)
+Section	Format Types
+Opt	ddmmyy		"The date is to be given in day-month-year format."
+Opt	ddmmmyy		"The date is to be given in day-month-year format where the month is a three letter code (e.g. 20-May-98)"
+Opt	Internal		"The value is to be given in internal V3/V4 format. See detail on specific dimension types for more \
+detail (e.g. " PntType:UDate " or " PntType:DateTime ")."
+Opt	MMM		"The month is to be given in year-month or month-year where the month is an alpha month abbreviation (e.g. 'Jan')."
+Opt	mmddyy		"The date is to be given in month-day-year format."
+Opt	mmyy		"The month is to be given in month-year numeric format (2 or 4 digit years allowed)."
+Opt	yymm		"The month is to be in year-month format (2 or 4 digit years allowed)."
+Opt	yymmdd		"The date is in year-month-day format."
+Opt	Hex4		"Each byte of a binary value is given as two hexadecimal digits."
+Opt	Default		"Use the default formatting for the dimension."
+Opt	Hexadecimal		"The numeric column is in hexadecimal notation."
+Opt	Money		"The numeric column contains money- strip off leading dollar signs, embedded commas, etc."
+Examples
+EX	"Table Fixed"
+EX	"&nbsp;&nbsp;Column A Int Width 5"
+EX	"&nbsp;&nbsp;Column B UDate Format MMDDYY Width 6"
+EX	"&nbsp;&nbsp;Column C Alpha Start 30 Width 20"
+EX	"&nbsp;&nbsp;Column D UDate Point UDate:{now} Desc \"Date data created\""
+EX	"EndTable"
+EX	""
+EX	"Table Variable"
+EX	"&nbsp;&nbsp;Column Cus *, InvDate UDate, Type *, "
+EX	"EndTable"
+CMD	Context	Update or Examine the Context	V4
+CUsage	Context Add	"point"
+CUsage	C	""	"point"
+CUsage	Context ADV	"dim value"
+CUsage	Context Examine	""
+CUsage	C	""	""
+CUsage	Context Push	"frame"
+CUsage	Context Pop	"frame"
+CUsage	Context PopAny	"frame, frame, ..."
+Params	point	"Any V4 point to be added to the context."
+Params	dim	"Any defined dimension."
+Params	value	"Any valid value for points on " Param:dim "."
+Params	frame	"The name or numeric id of a context frame."
+Desc
+IPar	"The " Command:Context " command is used to manipulate the current context-"
+Opt	Add	point	"To add " Param:point " to the current context overwriting any other point with the same dimension."
+Opt	ADV	dim value	"Similar to the Add option in that a point is added to the context. The point is determined \
+by the " Param:dim " dimension and " Param:value " point on that dimension. The " Param:value " always continues to the end \
+of the line. This option is primarily used by WWW servers that are not sure of the exact format of a V4 point value. \
+This option will automatically enclose string values in quotes and list values in parentheses. If no " Param:value " is specified \
+then 'none' will be inserted for time and numeric points, an empty string will be inserted for alpha points. See examples below. Also see the \
+<b>JSON</b> attribute within the " Command:Dimension " declaration."
+Opt	Examine		"To output the current context. This command with no arguments also outputs the current context."
+Opt	Push	frame	"To push a new frame onto the context with name " Param:frame ". See the discussion of context frames for more information on this concept."
+Opt	Pop	frame	"To pop frames until " Param:frame " is popped off the context stack. An error is generated \
+if the " Param:frame " cannot be located."
+Opt	PopAny	"frame,frame"	"Attempts to pop any of the named " Param:frame "s from the context stack. No errors are \
+generated if none of the named frames currently exist on the context stack."
+Examples
+EX	"Context Add UDate:951231"
+EXWD	Context Add Cus:{new}	create new cus point and insert into context
+EXWD	C cus+	identical to above example
+EXWD	Context ADV Alpha now "is" the time	adds Alpha:"now \\"is\\" the time"
+EXWD	Context ADV List now is the time	adds List:(now is the time)
+EXWD	Context ADV Num:123,456.44	parsed as two numbers because Dim:Num has MULTIPLE attribute
+EXWD	Context ADV Money:123,456.44	parsed as single number (assuming MULTIPLE attribute is not set)
+IPar	"The first example adds the point corresponding to the date 31-Dec-95 to the current context. The second example \
+creates a new point on the Cus dimension and adds it to the current context. An ambiguous condition arises when a number \
+contains embedded commas. It could either be multiple numbers (normal V4 syntax when " Option:Multiple " is declared on \
+a dimension or it could be one number with commas being used to delimit groups of a thousand (normal for currency). \
+V4 resolves this by looking at the dimension declaration. If " Option:Multiple " was given then V4 assumes that commas \
+delimit mulitple numbers. If the " Option:Multiple " was <b>not</b> given then the commas are removed and a single number \
+is parsed. Leading currency characters are also removed."
+IPar	"The example below shows the output of a <b>Context Examine</b> command. The values in parentheses are for debugging purposes and have no end-user meaning."
+EX	"Context Examine"
+EX	"Dim:Int (4533) (hx=134) = Int:123, (px=1)"
+EX	"Dim:Cus (3213) (hx=150) = Cus:43985534, (px=20)"
+EX	"Dim:IM (1232) (hx=169) = No point currently defined"
+CMD	Debug	V4 Debugging Command	V4
+CUsage	Debug	"option [value]"
+CUsage	DB	"(same as Debug Break)"
+CUsage	D	"option [value]"
+Cusage	DC	"(same as Debug Continue)"
+CUsage	DS	"(same as Debug Step)"
+CUsage	DS	"num (same as Debug Source num)"
+CUsage	DSI	"(same as Debug StepInto)"
+CUsage	DSN	"(same as Debug SNC)"
+Params	option	"One of the debug options below."
+Params	value	"A value or parameter for the debugging option."
+Desc
+IPar	"This command is used to set, remove, and manipulate breakpoints. Setting a breakpoint is a two step process. The first step is identifying \
+the source file containing the V4 code to be debugged. This is done with the 'Debug Source' command and makes a particular file <i>active</i> for \
+debugging. The second step is to set breakpoints at one or more lines within the active file. This is achieved with the 'Debug Break' command. \
+The Break option has many sub-options for controlling when a breakpoint is entered and what actions are taken when entered. Multiple sub-options \
+may be entered on a single line. The default options for a breakpoint are 'Evaluations Location' (display evaluations and current location)."
+Opt	Break		"This option, with no arguments, lists all active breakpoints."
+Opt	Break	line	"Set a breakpoint at " Param:line " of the current source file (see Break Source)."
+Opt	"Break After"	num	"Only break after reaching this breakpoint " Param:num " times."
+Opt	"Break AutoStep"		"This is used to define a 'breakpoint' to be invoked with each 'Debug Step' command. It is to be used in conjunction with other options."
+Opt	"Break Context		"Output the current context when this breakpoint is reached."
+Opt	"Break Continue"		"Immediately continue after performing breakpoint actions (i.e. do not wait for user input)."
+Opt	"Break Delete"	num	"Delete the specified breakpoint."
+Opt	"Break Do"	point	"Evaluate the V4 " Param:point " (intersection/module) when the breakpoint is hit."
+Opt	"Break Evaluations"		"Display the number of V4 evaluations performed."
+Opt	"Break Fail"		"Only break if the evaluation at the breakpoint location fails."
+Opt	"Break If"	point	"Evaluate the " Param:point " and break only if the result is Logical:True."
+Opt	"Break Location"		"Display the current location."
+Opt	"Break Module"	intmod	"Break whenever the V4 module " Param:intmod " is entered."
+Opt	"Break Once"		"This is a one-time breakpoint, delete it after executing breakpoint actions."
+Opt	"Break Point"		"Display the intersection/point at the breakpoint location."
+Opt	"Break Results"		"Display the results of evaluating the intersection at the breakpoint location."
+Opt	"Break Return"	point	"Return the evaluation of " Param:point " instead of the evaluating the intersection at the breakpoint location."
+Opt	"Break Silent"		"Perform a silent breakpoint, do not output anything when breakpoint is reached."
+Opt	"Break Skip"		"Skip the intersection (do not evaluate) at the location of the breakpoint. This cannot be used with the Fail option."
+Opt	"Break Stack"		"Show the evaluation stack when the breakpoint is reached."
+Opt	"Break Time"		"Show the cpu and wall-clock time."
+Opt	"Continue"		"Continue running from the breakpoint."
+Opt	"SNC"		"Step to the next point and evaluate it <b>but do not honor any ',<i>failpoint</i>'"
+Opt	"Source"		"List all source files included in the current V4 runtime environment. The starred ('*') file is the active file."
+Opt	"Source"	name	"Make the file described by " Param:name " the active source file."
+Opt	"Source"	num	"Make the " Param:num "<sup>th</sup> source file the active file."
+Opt	"Stack"		"Immediately display the runtime evaluation stack."
+Opt	"Step"		"Continue from the breakpoint, evaluate any (nested) intersections on the current line, and then break on the next line."
+Opt	"StepInto"		"Continue from the breakpoint, step into the the next (nested) evaluation, and then break again."
+Opt	"Stop"		"Stop the V4 process. This is same as the 'Exit' command."
+Opt	"Time"		"Immediately output the incremental and cumulative cpu/wall clock times."
+Examples
+EXWD	Debug Source file1	make the source file- file1.v4 the active file
+EXWD	Debug Break 234	set a breakpoint at line 234 in file1.v4
+EXWD	DC	continue evaluating after entering a breakpoint
+EXWD	D Break AutoStep Time	Sets an auto-step breakpoint to display run/wall times
+EXWD	DC	continues but automatically stops at next statement (due to above auto-step breakpoint)
+CMD	Dimension	Declare a new Dimension	V4
+CUsage	Dimension	"name [,name] type options"
+Params	name	"The dimension name. More than one name can be given if all dimensions are being created with the same attributes."
+Params	type	"The dimension type. See <i>Dimension Types</i> for a complete discussion of dimension types."
+Params	type	"If the dimension type is specified as 'LOCALLY' then it is assumed that the dimension has already been declared and that this command line is to redefine one or more of its attributes."
+Params	options	"One or more additional attributes/options, see below for a list"
+Desc
+IPar	"The Dimension command is used to create a new dimension. If the Locally keyword is given in place of a dimension type then the dimension is assumed to exist and attributes for the dimension are temporarily modified. The dimension name and type are mandatory, one or more options, listed below may also be given."
+Section	Dimension Options
+Opt	Acceptor	""	"The points on this dimension are to be parsed via a special routine. See 'Acceptors & Displayers' below."
+Opt	ADPoint	point	"Specifies a " Param:point " to be passed to both the Acceptor and Displayer routines."
+Opt	AllValue	num	"Specifies the numeric value to use when creating a binding using the dim.. construct. This is specifying what value to use when referencing all values."
+Opt	All	num	"Same as the AllValue option."
+Opt	AsIs	""	"If given then escape sequences for literal values for " PntType:BigText " points are  taken as-is, i.e. they are not interpreted. This option is useful when passing \
+JSON values and you want to defer the processing of escape sequences for the JSON parser, not the V4 parser. See below for an example."
+Opt	Attributes	string	"Specifies additional dimension attributes. Currently this is allowed only for " PntType:BigText " points."
+Opt	BaseDate	pnt	"Specifies the base date for a " PntType:UWeek " dimension. " Param:pnt " must be a point on a " PntType:UDate " dimension."
+Opt	BindEval		"Bindings on this dimension are handled as an evaluation, see below."
+Opt	Binding	level	"The binding number to use."
+Opt	Bind	level	"Same as the Binding option."
+Opt	Calendar	name	"The type of calendar for " PntType:Calendar " dimensions."
+Opt	CaseSensitive	""	"Dictionary entries are normally case-insensitive. This option specifies that they are to be case sensitive for the dimension. This option may also be specified with <b>Alpha</b> dimensions - see the " IntMod:Format " module \
+for details on its usage with alpha dimensions."
+Opt	Decimals	num	"Defines the number of implied decimals for dimensions of type Fixed."
+Opt	Description	text	"An optional description of the dimension. The " IntMod:V4 " module can be used to retrieve this descriptive text."
+Opt	Desc	text	"Same as the Description option."
+Opt	Displayer	""	"The points on this dimension are to be output via a special routine. See 'Acceptors & Displayers' below."
+Opt	DisplayerTrace	""	"Whenever the points on this dimension are to be output as a result of a trace or context dump then use a module to format the point. See 'Acceptors & Displayers' below."
+Opt	DotDotToList		"Triggers [UV4:DimToList] processing whenever 'dim..' is encountered for this dimension."
+Opt	DotIndex	""	"If this attribute is set on a " PntType:List " dimension then expressions of the form " Param:list "." Param:point " are \
+converted to " IntMod:List "(" Param:list "* Nth::" Param:point ")."
+Opt	DotList		"If this attribute is set on a " PntType:List " dimension then expressions of the form " Param:"dim.value.value..." " will be \
+converted to a list of the form: [UV4:Eval " Param:"dim:(value value ...)" "]. This option can be used to implement any kind of nested access to data \
+(such as XML trees)."
+Opt	Entries	dim	"This option is only valid for " PntType:List " dimensions.  It is used to associate a dimension with all of the list entries. The primary use is with bitmaps stored in external areas."
+Opt	FileName		"Parse points on this Alpha dimension as filenames."
+Opt	Format	string	"A format string to be used on output of points on the dimension. The format of " Param:string " is that of the C language <a href='http://www.die.net/doc/linux/man/man3/printf.3.html' target=_blank>printf</a> routine."
+Opt	Hexadecimal	""	"All values for points on this dimension are assumed to be input/specified as hexadecimal. This option applies \
+only to " PntType:Integer " dimension types. Output remains decimal unless overriden with the OutFormat option (OutFormat \"%x\")."
+Opt	Hierarchy	num	"The hierarchy number associated with this dimension."
+Opt	History		"This option is only valid for dimensions associated with time. If given then only historical dates (i.e. no future dates) are allowed. This option is also used in \
+disambiguating two-digit years. A two digit year is assumed to be equal to or less than the current year. For instance, if today's date is June 10, 2008 then '20-Mar-11' would be parsed as '20-Mar-1911'."
+Opt	Intersection		"Allows the declared " PntType:List " dimension to contain references to intersections and internal modules."
+Opt	IsA	dim	"Points on this dimension are to take on all of the properties (e.g. Acceptor, Displayer) of dimension " Param:dim "."
+Opt	JSON		"This is used on " PntType:Alpha " and " PntType:BigText " point types to indicate that the contents will be JSON. The " Command:Context " ADV command will immediately parse the input string. \
+This will allow for extremely long JSON values to be sent to V4 from the web."
+Opt	Local		"Declares this dimension to be local to the current compilation unit. The scope of the compilation unit \
+may be either the current included file or the current point. Local dimensions interpretively declared with the " Command:Dimension " command \
+are local to the remainder of current include file. Local dimensions declared within the specification of a point (with \
+the ^v\"<i>v4command</i>\" construct are local only through the end of that point. Multiple local dimensions with the same name may be defined."
+Opt	MMDDYY		"This option is only valid for UDate, Date-Time, and Calendar point types. It assumes numeric dates will be in month-day-year format, NOT year-month-day which is the default."
+Opt	MMYY		"This option is only valid for UMonth point types. It assumes numeric months of the form " Param:mmyy " or " Param:mmyyyy "."
+Opt	Multiple		"Allow the specification of multiple points (i.e dim:a,b,c)."
+Opt	NoCreate		"Do not permit the automatic creation of points for this dimension. This applies only to dimensions of type " PntType:Dictionary "."
+Opt	NoDuplicate		"The dimension is to be considered a set. This applies only to dimensions of type List. Lists that are sets will not contain duplicate points. V4 will prevent the addition of a point to a list if that point already exists (no error is issued)."
+Opt	None	num	"Defines a numeric value to be used when the <i>none</i> value for a numeric dimension is referenced."
+Opt	NoPrefix	logical	"Normally a point is prefixed with its dimension name when it is output. Declaring this option inhibits the displaying \
+of the dimension name prefix."
+Opt	Normalize	""	"Specifying this option for " PntType:Alpha " point types forces all points on that dimension \
+to be uppercase. For " PntType:Int2 " points, V4 ensures that the first value is always less than or equal to the second."
+Opt	Numeric		"The points on this dimension are assumed to be numeric. This only applies to dimensions of type Dictionary. With this option, the two points dim:00123 and dim:123 are considered identical. Without it the two points would be considered different."
+Opt	OutFormat	"mask"	"An output format string. If the format " Param:mask " begins with a percent symbol ('%') then <a href='http://www.die.net/doc/linux/man/man3/printf.3.html' target=_blank>C-language formatting</a> is performed, otherwise V4 formatting (see " IntMod:Format ") is done."
+Opt	Overload	percent	"This option applies only to " PntType:AggRef " dimensions and specifies the percentage that \
+the aggregate blocking should be overloading. V4 stores all BFAggreate records in fixed sized blocks of approximately 64K bytes. \
+Each 64K byte buffer is normally compresses before output and usually results in a block 33% to 50% smaller than the original. \
+This means that a BFAggregate block could actually be greater than 64K as long as the compressed size fits into 64K. The \
+Overload " Param:percent " specifies a percentage to extend this block."
+Opt	Periods	num	"Specifies the number of periods per year for a " PntType:UPeriod " dimension. The default is 13."
+Opt	PointCreate	how	"Specifies how points are to be created. The two how parameters are " param:Point " meaning that points are to be created with the " command:Point " command, and " param:New " meaning that points are to be created with dim:{new}."
+Opt	Point	how	"Same as the PointCreate option."
+Opt	Range		"Allow the specification of a range of points (i.e. dim:a..b)."
+Opt	RDBNumeric		"Causes the " IntMod:Format " module to use a point's internal (numeric) value when formatting for a \
+relational database value (" TagName:RDB " tagged argument)."
+Opt	RDB		"Same as the RDBNumeric option."
+Opt	TimeZone	num	"Specifies the timezone (hours ahead or behind Greenwich mean time GMT) for " PntType:Calendar " dimensions."
+Opt	UOMId	num	"The units-of-measure on this dimension are associated with UOMId " Param:num "."
+Opt	Value	type	"Enables the parsing of '<i>dim</i>:[...]' and '<i>dim</i>:(...)' constructs with the dimension. The allowed values for " Param:type " are <b>List</b> and <b>Tree</b>. \
+See the discussion below for more detail on this option."
+Opt	XML		"Strings that are passed into V4 from the web (via the " Command:"Context ADV" " command) are checked for embedded tags. If a tag is detected then \
+the leading '&lt;' symbol is replaced with '&amp;lt;'. This is done to prevent the possibility of <a href='http://en.wikipedia.org/wiki/Cross-site_scripting' target=_blank>cross-site scripting</a> security problems. \
+However, if this option is specified then this check is not performed. Note: This option <b>must</b> be specified on any dimension that will be passing HTML/XML strings from the web."
+Opt	YMDOrder	ymd	"Specifies the ordering of Year, Month, and Day within any of the date point types. The " Param:ymd " \
+parameter may be any of the six permutations: YMD, YDM, MYD, MDY, DYM, or DMY. The default is by country and is defined in the V4CountryInfo.v4i file. \
+Up to three permuations (separated with commas) may be given. A date will be parsed with the first and if that fails (ex: \
+day not valid) then the date will be re-parsed with the second value, and then the third if necessary."
+Section	Acceptors and Displayers
+IPar	"The " Option:Acceptor " and " Option:Displayer " options are used when the specification and/or display of a dimension point does not directly \
+match how the point is to be represented. For example many systems internally use numeric parameters yet accept and display keywords instead of the \
+internal codes."
+IPar	"Dimensions with these attributes cause V4 to evaluate bindings whenever a point on the dimension is input or output. The format of these \
+bindings is"
+EX	[UV4:Acceptor Dim:dim [adpoint] Alpha..] = acceptor-rules
+EX	[UV4:Displayer dim:point [adpoint]]
+Par	" where dim is the dimension, adpoint is an optional point given by the " Option:ADPoint " option. See also the " TagResName:Include " option \
+for the " IntMod:V4 " module. This option is useful for displaying the location within an include file of an acceptor error."
+IPar	"The DisplayerTrace option is similar except it applies to formatting of points in debugging traces, error messages and context dumps."
+IPar	"The following example defines the ProgId dimension (for Program-Identifier). The points on the dimension are numeric, yet the user format is " Param:yyyyp " where " Param:yyyy " is a year and " Param:pp " is program name, usually S for spring or F for fall. Additionally CURRENT can be used to default to the current program."
+EXML	"A Dimension Acceptor and Displayer"
+ML	Bind [UV4:Acceptor Dim:ProgId Alpha..]
+ML	&nbsp;If(Str(Alpha* UC? Head::"CURRENT")
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@ProgId:=Str(DTInfo(UDate:{now} UYear?) LE(DTInfo(UDate:{now} Month?) 6 "S" "F"))
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@If(Str(Alpha* UC? Head::"OTHER") 1
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@If(Str(Alpha* UC? Head::"ALL") 2
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@DefQ(Int:=Str(Alpha* Length::4)
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@{(2025 - Int:=Str(Alpha* Length::4)) * 100 + TEQ(NId:=Str(Alpha* Begin::5 End::Int:-1) F 99 S 98 F2 97 S2 96 FC 95 SC 94)}
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@{(2025 - UYear:=Int:=Str(Alpha* Length::2)) * 100 + TEQ(NId:=Str(Alpha* Begin::3 End::Int:-1) F 99 S 98 F2 97 S2 96 FC 95 SC 94)} )))
+ML	&nbsp;&nbsp;&nbsp;)
+ML	Bind [UV4:Displayer ProgId..]
+ML	&nbsp;TEQ(ProgId*
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1 "Other"
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2 "All"
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Str(Int:={2025 - ProgId* / 100} TEQ(MthMod(ProgId* 100) 99 F 98 S 97 F2 96 S2 95 FC 94 SC XX)))
+EXML	"Local Dimensions"
+ML	!Begin of an Include file
+ML	Dim Dim1 Int Local /* Dim1 local through the end of the include file */
+ML	[FunctionXXX]
+ML	&nbsp;Do(^v"Dim Dim2 Alpha Local" /* Dim2 local throughout the Do( ... ) point */
+ML	&nbsp;&nbsp;&nbsp;&nbsp; . . .
+ML	&nbsp;&nbsp;&nbsp;&nbsp; . . .
+ML	&nbsp;&nbsp;&nbsp;)
+ML	!Dim1 still defined, Dim2 no longer defined
+Section	"The AsIs Attribute"
+IPar	"This attribute is used to control how the backslash character is interpreted on strings (" PntType:Alpha " and " PntType:BigText ") coming in through the " Command:Context " <b>ADV</b> command."
+EXWD	Dim d1 BigText	Define a bigtext dimension
+EXWD	Dim d2 BigText AsIs	and another with the AsIs attribute
+EXWD	Context ADV d1:This has an embedded \" quote	Add to context
+EXWD	Context ADV d2:As does this \" as well	Add to context
+EXWD	Eval Echo(d1* " vs " d2*)	Note difference in backslash--
+EXWD	This has an embedded " quote vs As does this \\" as well	 
+Section	"AutoContext"
+IPar	"The AutoContext attribute can be used to indirectly specify how a point is to be 'valued' during the evaluation of an intersection if that point is not currently defined in the context. For example, if the Customer dimension has been defined as-"
+EX	"Dimension Customer Integer AutoContext NId:NeedCustomer"
+IPar	"and the following binding has been made-"
+EX	"Bind [NeedCustomer Dim:Customer Order..] [BilltoCus Order*]"
+IPar	"and if we are in the context of (Order:543210 Date:4/15/93 Item:123) and attempt to match (through an evaluation)-"
+EX	"[ItemPrice Item:123 Date:1/1/93..12/31/93 Customer:5678]"
+IPar	"then it would appear that no match can be made because we do not have any point in the Customer dimension in the current context. However, V4 will automatically attempt to evaluate"
+EX	"[NeedCustomer Dim:Customer]"
+IPar	"and use the result as the value for the Customer dimension for this match. This would match the binding above, re-evaluate to determined the billto customer for the current order and if it equaled Customer:5678 permit the match to succeed."
+Section	"Automatic Intersections (AutoIsct)"
+IPar	"Points referenced on dimensions marked with the AutoIsct option can be automatically evaluated without the use of bounding brackets. The following is an example-"
+Section	"AutoIsct Example"
+EX	"Dim AI Dict AutoIsct Bind 5"
+EX	"Point AI Val1 Val2"
+EX	"Bind [Val1] 100"
+EX	"Bind [Val2] 200"
+EXWD	= Minus(Val1 Val2)	Note that the points are not enclosed in brackets"
+EX	"Int:-100"
+Section	Binding Numbers
+IPar	"Binding numbers are an important aspect of a large V4 environment. These numbers control how a binding is to be stored. During a binding, V4 scans all points in the binding intersection from left to right and tracks the first dimension with the highest binding number. This becomes the dimension used as the primary 'key' for storing the binding. For this reason, all dimensions with a binding number must be stored as a number- Integer, Dictionary, Time, etc. Alpha, foreign, data elements, etc. cannot have binding numbers."
+Section	"Relation to Hierarchy numbers"
+Section	"How to force binding into an area"
+Section	Point Creation
+IPar	"V4 assumes, for most dimensions, that all possible points already EXist for that dimension and that any point on that dimension can be referenced. Any point on the Int (integer) dimension can be referenced as a integer literal, any point on the Alpha dimension can be referenced as a quoted string. Dimensions of type Dictionary are different. Points on these dimensions correspond to specific points. V4 can create these points as they are referenced or with the NoAutoCreate option, force the user to declare all points with the Point command."
+IPar	"The PointCreate dimension option enables another level of control by declaring how points are to be created. If PointCreate Point is given, then all points on the dimension must be done with the Point command. If PointCreate New is given then points are created with the dim:{new} construct. Each reference to dim:{new} creates a new, unique point for that dimension. In both cases, the use of PointCreate, causes V4 to create an internal list of all created points for that dimension so that the dim.. construct can be used to reference all points on that dimension."
+EX	"Dim Division Dictionary PointCreate Point NoAutoCreate"
+EX	"Point Division USA CANADA MEXICO"
+EX	"Eval EchoT( Division.. )"
+EX	"USA   CANADA   MEXICO "
+Section	The BindEval Option
+IPar	"The BindEval option is used to control how bindings are created on a dimension. In most cases, V4 makes \
+all the decisions on how to represent a store a binding. With this option, when a binding is to be done on the dimension, \
+V4 evaluates an intersection that contains all of the points in the binding intersection plus a new point of " Tag:Value ":" Param:bindval " where " Param:bindval " is the value point of the dimension. The EXample below shows how a binding on the GL dimension can be converted to another binding."
+EX	"Dimension GL Bind 5 BindEval"
+EX	"Bind [GL.. Period.. Year.. Type.. Value..] BindQE([Pack1616(GL* Period*) Year* Type*] Value*)"
+Section	Using the DotDotToList Option
+IPar	"The DotDotToList option is used to map from " Param:dim ".. to a list of points when that list might not be explicitly given or when that list may vary. \
+The example below demonstrates the definition of the Year dimension which corresponds to the years that a fictional company has been in business. \
+The DotDotToList binding defines the years as being from 1990 to the present and the Acceptor function ensures that only years within that time span are referenced."
+EX	Dim Year UYear DotDotToList Acceptor Range Multiple
+EX	Dim Arg IMArg
+EXWD	[UV4:Acceptor Dim:Year Alpha..]	The use of " IntMod:In ensures that the year specified is valid
+EX	&nbsp;In(MakeP(Dim:Year Int:=Alpha*),0 [UV4:DotDotToList] Arg:1 @EchoE("Year must be 1990 through " UYear:{now}))
+EXWD	[UV4:DotDotToList Dim:Year]	Note that the UYear dimension is used to define points. If the Year dimension was used then problems arise from using this definition in the Acceptor binding (it recurses into oblivion!)
+EX	&nbsp;&nbspNum(UYear:1990 To::UYear:{now} Dim:Year	)
+Section	The Value Option
+IPar	"The Value option enables two types of dimension reference that would not normally be allowed. If 'Value List' is given then the following two dimension references are possible: \
+'<i>dimension</i>:( <i>list of points</i> )' and '<i>dimension</i>:[ <i>list of points</i> ]'. The former is parsed and converted to [UV4:ValuesList Dim:<i>dimension</i> (<i>list</i>)] and the \
+latter to [UV4:ValueList Dim:<i>dimension</i> (<i>list</i>)] (compare UV4:Value<span style='color:red;'>s</span>List to UV4:ValueList). If the 'Value Tree' option is given then the following two \
+types of references are possible: '<i>dimension</i>:( <i>logical expression</i> )' and '<i>dimension</i>:[ <i>logical expression</i> ]'. These are parsed and converted to [UV4:ValuesList Dim:<i>dimension</i> Int:<i>treeId</i>] \
+and [UV4:ValueList Dim:<i>dimension</i> Int:<i>treeId</i>] where Int:<i>treeId</i> points to the top node a V4 " IntMod:Tree " structure."
+IPar	"If the <i>list of points</i> or <i>logical expression</i> consists of a single intersection or module <b>and</b> is prefaced with a back quote ('`') then that intersection/module is is inserted into the resulting binding. \
+At runtime the evaluation must return either a list or integer corresponding to a tree node."
+IPar	"The purpose of this option is to allow the referencing of a set of points on a dimension without explicitly specifying how those points are to be determined. By writing handlers to V4 areas, SQL databases \
+or other data sources, one can use a consistent expression to refer to data (points) from many sources of data."
+EXWD	Dim data Integer Value Tree	define dimension with Value attribute
+EXWD	[UV4:ValuesTree Dim:data Int..]	define 'handler' to enumerate through the tree
+EXWD	 List(Tree(Int* ListOf? Enter::"(" Leave::")"	&nbsp;
+EXWD	   Return::@Format(Tree(Int* Value?) Point?) Bottom::@Format(Tree(Int* Value?) Point?)) Column::" ")	&nbsp;
+EXWD	= data:(foo > 12 & moo < 15)	returns "( ( NId:foo UV4:Rangle Int:12 ) UV4:Ampersand ( NId:moo UV4:LT Int:15 ) )"
+CMD	Dump	Dumps out Bindings Containing Dimension or Matching Pattern	Debug V4
+CUsage	Dump	"dim"
+CUsage	Dump	"pattern"
+CUsage	Dump	"pattern > file"
+CUsage	Dump	"pattern >> file"
+Index	punctuation	General	Str("v4refcommands.htm#Command:Dump")	> (Dump)	Command
+Index	punctuation	General	Str("v4refcommands.htm#Command:Dump")	>> (Dump)	Command
+Params	dim	"A dimension name."
+Params	pattern	"An intersection specification."
+Params	file	"A file name to receive any output of the dump."
+Desc
+IPar	"This command searches all currently active areas for bindings containing a point on " Param:dim " or bindings \
+containing the point(s) contained within " Param:pattern "."
+IPar	"If a '> " param:file "' is specified then all output is sent to \
+the " Param:file ", not the user's console. The '>' construct specifies that a new file is to be created. \
+The '>>' construct specifies that a new file is to be created if it does not already exist, otherwise append to the end of the existing file."
+Examples
+EXWD	Dump IM	Outputs all bindings containing points referencing Dim:IM
+EXWD	Dump [LId.. NId..]	Outputs all bindings containing both Dim:LId points and Dim:NId points
+CMD	Echo	Echo Text to Controlling Window	Debug	Debug V4
+CUsage	Echo	"point point ..."
+Params	point	"Any V4 point."
+Desc
+IPar	"The Echo command simply echos or outputs its argument points to the controlling window."
+Examples
+EX	"Echo Here we are"
+CMD	Element	Define a V4IS Structure Element	Database
+CUsage	Element	"ref sub index name bytes offset v3dt decimals"
+Params	ref	"The file reference of the structure to which this element belongs."
+Params	sub	"The substructure index for this field, i.e. which substructure within the main structure of the record. Use 0 for elements within the main structure."
+Params	index	"The element index number within the structure."
+Params	name	"The name of the data element."
+Params	bytes	"The length of the element in bytes."
+Params	offset	"The offset to the starting byte of this element within the parent structure."
+Params	v3dt	"The V3 datatype code."
+Params	decimals	"The number of implied decimal places."
+Desc
+IPar	"The " command:Element " command is used to define elements within a V4IS structure. These definitions are then used by the " intmod:V4ISVal " \
+module to access and interpret data within V4IS records. The following two macros are recommended for defining elements. The V3 compiler \
+will output macro calls adhering to this format-"
+EX	"{/STRUCT( aFileRef, aStructName )"
+EX	"}/STRUCT"
+EX	"{/FLD(aFieldName, aRef, aIndex, aDim, aV3DT, aKeyNum, aSubStruct, aOffset, aBytes, aDecimals, aComment )"
+EX	"Element aRef aSubStruct aIndex aName aBytes aOffset aV3DT aDecimals ;"
+EX	"}/FLD"
+EX	"{/FLDS(aRef, aSubStruct, aIndex, aBytes, aMaxCount, aName, aOffset )"
+EX	"Structure aRef aSubStruct aIndex aName aBytes aOffset aMaxCount ;"
+EX	"}/FLDS"
+Examples
+EXML	"V3 Commands / Structure and Resulting V4 Macros"
+ML	dcl v4b "example.v4" ;
+ML	dcl struct FileInfo=1234
+ML	  {  int a ;
+ML	     alpha 10 b ;
+ML	 } ;
+ML	sys_exit() ;
+ML	  
+ML	The result in example.v4 
+ML	  
+ML	STRUCT( 1234, FileInfo)
+ML	FLD( A, 1234,1,Int,1,0,1,0,4,0, "")
+ML	FLD( B, 1234,2,Alpha,3,0,1,4,10,0, "")
+ML	FLD( FileInfo, 1234,3,Alpha,3,0,0,0,16,0, "")
+ML	FLDS( 1234,1,3,16,0,"",0)
+CMD	End	End a Section of V4 Source	Macro
+Index	EndLog	Command	Str("v4refCommands.htm#Command:End")
+Index	EndTable	Command	Str("v4refCommands.htm#Command:End")
+CUsage	End	""
+CUsage	EndLog	""
+CUsage	EndTable	""
+Desc
+IPar	"The " command:End " command is used to end multiline V4 source sections such as " param:If " statements, LogToIsct sections and Tables. The EndLog terminates a LogToIsct section and EndTable ends a table definition. The generic End command can be used in place of either of these."
+Examples
+EX	"If not Dimension Cus										If Cus dimension not defined then define it as well as CusId"
+Ex	" Dim Cus AggRef"
+EX	" Dim CusId Dictionary"
+EX	"End"
+CMD	Error	Generate Error Message	Debug
+CUsage	Error	"text"
+Params	text	"Any V4 text string."
+Desc
+IPar	"The Error command generates a V4 error with the " param:text " message."
+Examples
+EX	"Error Should not be here"
+CMD	Evaluate	Evaluate an Intersection	V4
+Index	punctuation	General	Str("v4refcommands.htm#Command:Evaluate")	= (Eval)	Command
+Index	punctuation	General	Str("v4refcommands.htm#Command:Evaluate")	> (Eval)	Command
+Index	punctuation	General	Str("v4refcommands.htm#Command:Evaluate")	>> (Eval)	Command
+CUsage	Evaluate	"isct"
+CUsage	Evaluate	"isct > file"
+CUsage	Evaluate	"isct >> file"
+CUsage	"="	"isct"
+Params	isct	"An intersection (not quoted) to be evaluated."
+Params	file	"A file name to receive any output of the evaluation."
+Desc
+IPar	"The " command:Evaluate " command evaluates the given intersection. The result of the evaluation is not \
+displayed on the user's console. The '=' command also evaluates an intersection and then displays the result on \
+the user's console."
+IPar	"If a '> " param:file "' is specified then any output generated in the evaluation is sent to \
+the " Param:file ", not the user's console. The '>' construct specifies that a new file is to be created. \
+The '>>' construct specifies that a new file is to be created if it does not already exist, otherwise append to the end of the existing file. \
+The output stream is named <b>UV4:EvalStream</b>."
+Index	EvalStream	Command	Str("v4refCommands.htm#Command:Evaluate")
+Examples
+EX	"= [Name Cus:123]"
+EX	"Alpha:The Jones Company"
+EX	"Eval [BalanceSheet Period:3 Year:1995] > bs.rpt"
+IPar	"The first example evaluates the Name of a customer. The returned name is output (shown underlined). \
+The second example evaluates a balance sheet and directs the output to the file bs.rpt."
+CMD	Exit	Exit from V4	V4
+CUsage	Exit	""
+CUsage	Exit	"File"
+CUsage	Exit	"Statistics"
+Desc
+IPar	"The Exit command simply exits from V4 to the host operating system-"
+Opt	File		"Exit from the any include files and return to the V4 interpreter command prompt (does not exit from V4)."
+Opt	Statistics		"The optional use of the Statistics keyword tells V4 to output a runtime summary (default)."
+Examples
+EX	"xv4>Exit Statistics"
+EXML	"Processing Summary"
+ML	Processing Summary
+ML	  Time: 31 elapsed seconds, 12.62 CPU seconds
+ML	  Scan: 6975 lines, 93426 tokens
+ML	  Bind: 10415 added
+ML	  Isct: 5341026 eval's, 18549 value I/O's, 74% cache hits
+ML	   Ctx:  3768380 adds, 68478 I/O, 25994 Cache's, 3672021 Slams
+ML	  Cnbl: 1520 insertions, 11930 hits
+ML	 XDict: 557 XDict lookups, 61% cache hits
+ML	  RAgg:  3985967 calls, 3974151 repeats (99 %)
+ML	  Wall: 172291 evals/sec, 121560 context-adds/second
+ML	   CPU:  423219 evals/cpusec, 298603 context-adds/cpusec
+ML	  Errs: 0
+Index	Time	Command	Str("v4refCommands.htm#Command:Exit")
+Index	Scan	Command	Str("v4refCommands.htm#Command:Exit")
+Index	Isct	Command	Str("v4refCommands.htm#Command:Exit")
+Index	Ctx	Command	Str("v4refCommands.htm#Command:Exit")
+Index	Cnbl	Command	Str("v4refCommands.htm#Command:Exit")
+Index	XDict	Command	Str("v4refCommands.htm#Command:Exit")
+Index	RAgg	Command	Str("v4refCommands.htm#Command:Exit")
+Index	WAgg	Command	Str("v4refCommands.htm#Command:Exit")
+Index	Wall	Command	Str("v4refCommands.htm#Command:Exit")
+Index	CPU	Command	Str("v4refCommands.htm#Command:Exit")
+Index	Slams	Command	Str("v4refCommands.htm#Command:Exit")
+IPar	"The first line shows the total wall-clock time and cpu time spent in V4. The second line shows the \
+total number of lines (command) scanned. This includes lines within macros. The token count is the total number of \
+symbols, commands, literals, etc. scanned. The Bind line shows the total number of bindings added. The Isct line is \
+the number of intersections evaluated. The value I/O count is the number of separate I/O's needed to get 'big' values. \
+and the percentage of cache hits is the reflects percentage of values obtained in a runtime cache (larger is better). \
+The Ctx line shows the number of context calls, the number of I/Os to support, and the number of context cache hits. \
+The Slams count represents the number of fast point replacements into the context (slams are very fast and the more the merrier)."
+IPar	"The Cnbl insertions count is the number of context value cache insertions and the hits represents the number of cache \
+hits on those insertions (the larger the hits is to the insertions the better). \
+The XDict line shows number of External dictionary lookups and percentage found in the cache. \
+The RAgg line is the number of aggregate value lookups. The percentage should be close to 100% showing that blocking and buffering \
+within the Aggregate structure is operating properly. If aggregates are written then a WAgg line will show the number of logical writes \
+as well as the number of actual writes to the underlying V4IS file system."
+IPar	"The next two lines (Wall and CPU) average the wall clock time and cpu time over the number of intersections. \
+While there is no average time to perform an intersection, rates of over one million per second can be achieved with a \
+fast cpu. The last line shows the number of errors detected."
+CMD	If	Conditional Processing	Macro
+Index	If1	Command	Str("v4refCommands.htm#Command:If")
+Index	Else	Command	Str("v4refCommands.htm#Command:If")
+Index	ElseIf	Command	Str("v4refCommands.htm#Command:If")
+CUsage	If	"[:label] condition argument"
+CUsage	ElseIf	"condition"
+CUsage	Else	""
+CUsage	EndIf	"[:label]"
+CUsage	If1	"condition argument command"
+Params	condition	"A condition to be checked, see list below."
+Params	argument	"A macro argument or parameter to be checked for the condition."
+Params	command	"A single line command to be executed if the " param:condition "-" param:argument " pair is true."
+Params	label	"An optional If/EndIf label that can be used to help match up statements if nested If are required. An error is generated if the label names do not match."
+Desc
+IPar	"V4 supports an If-then-else capability primarily for use within macro. The If statement must be used with the EndIf and optionally the Else. It allows for multi-line conditional entries. The If1 statement is a one line command that can be used if the conditional command is a single line. The conditions to test are:"
+Section	If Test Options
+Opt	Bind	isct	"True if the intersection has a value bound to it (in current context)."
+Opt	Defined	arg	"True if the argument or Set Parameter symbol is defined, false otherwise."
+Opt	Defined	dim*	"True if the dimension is defined in the current context, false otherwise."
+Opt	Dimension	arg	"True if " Param:arg " is a valid dimension name. "
+Opt	Empty	arg	"True if the argument is a zero length string."
+Opt	Errors		"True if there have been any V4 errors."
+Opt	Exists	file	"True if the file exists, false otherwise."
+Opt	False		"Never true."
+Opt	Macro	name	"True if the macro " Param:name " is currently defined."
+Opt	MoreRecent	file1 file2	"True if the create/update date of " Param:file1 " is more recent than that for " Param:file2 "."
+Opt	Not	option	"Reverses the logic of the next test " Param:option "."
+Opt	Numeric	arg	"True if the argument is numeric"
+Opt	Same	arg1 arg2	"True if both arguments are the same or equal. Either of the arguments may be specified as a keyword, a quoted string, \
+a context point (either in current table or current context), or of the form `" Param:v4point " which is evaluated as a V4 point."
+Opt	Section	name	"True if the section name has been specified in the V4 start-up command line. This can be used \
+to conditionally process different sections of a V4 command file. See the -rs switch under <i>V4 Startup Switches and Options</i>."
+Opt	Test	v4point	"Evaluates the " Param:v4point " as a logical point."
+Opt	True		"Always true."
+Opt	ValidPoint	dim value	"True if the " tag:value " is valid for the dimension " tag:dim "."
+Examples
+EX	"Example 1: If/If1 Usage in V4 Macro"
+EX	"{/DEMO( aArg1, aArg2, aArg3 )"
+Ex	"If1 NoBind [Listof DimX:aArg1] Bind [Listof DimX:aArg1] List:() ;"
+EX	"If Defined aArg2 ;"
+EX	"  Bind [Value Func:aArg3] Alpha:aArg2 ;"
+EX	"Else ;"
+EX	"  Bind [Value Func:aArg3] 'No value defined' ;"
+EX	"EndIf ;"
+EX	"}/DEMO"
+IPar	"The first line of the macro is an " Command:If1 " statement. If the intersection is not defined then perform the \
+Bind command to bind it to an empty list. The following " Command:If "-" Command:Else "-" Command:EndIf " tests to see \
+if Arg2 has been defined or not and issues the appropriate " Command:Bind " commands."
+IPar	"The next example demonstrates the use of the " command:Dimension " option-"
+EX	"If not Dimension Cus										If Cus dimension not defined then define it as well as CusId"
+EX	" Dim Cus AggRef"
+EX	" Dim CusId Dictionary"
+EX	"End"
+CMD	Include	Read V4 Commands (Data) from File	V4 Macro
+CUsage	Include	"file options"
+CUsage	Include	"`point"
+Params	file	"The file to be included. If a keyword is given then " Param:file ".v4b is assumed. If the file is a quoted string then a full file path is used."
+Params	point	"The " Param:point " is evaluated. If the result is a single line string then the result is taken as the file name. If the result is a multi-line \
+string then that string is taken as the input to be included."
+Desc
+IPar	"The Include command causes the V4 interpreter to take all the commands in the specified file and execute them. \
+The lines of input are not normally echoed, but this can be controlled with the 'Set Echo' command."
+IPar	"If no file extension is given then '.v4b' is tried. If the lookup fails then '.v4c' is tried. \
+If the latter succeeds then the file is assumed to be compressed and is automatically expanded (see the section on xv4 commands)."
+IPar	"A filter option may be specified to preprocess all input lines. When a filter intersection is specified V4 process \
+the input as follows. First the input line is added to the context as a Dim:Alpha point. Then the filter point is evaluated. \
+If the resulting value is an " PntType:Alpha " or " PntType:BigText " point then that point is used as the current input line. \
+If the value is Logical:True then the current Alpha* point is used. If the value is Logical:False then the line is skipped \
+and processing continues with the next input line. If the result is the point UV4:Retry then the line is re-processed (this may be useful \
+for altering the context and then rereading the line). If the result is a " PntType:List " then each point in the list is <i>read</i> as \
+the next input line before resuming input from the main input stream."
+Section	Options
+Opt	Filter	isct	"Evaluate the filter " Param:isct " for every input line. See the " Command:Include " command for more information."
+Opt	Header	num	"Skip the first " Param:num " (header) line of the input file."
+Opt	Continued		"Long input lines may be continued by ending a continued line with a backslash character."
+Opt	Comment	chars	"Any line beginning with one of the characters in " Param:chars " is considered a comment line and skipped."
+Opt	CSV		"The input is taken to be in comma-delimited format."
+Opt	Delimit	char	"Use " Param:char " as the column delimited character."
+Opt	Goto		"Normally an 'include' nests to the the specified file and upon hitting the end-of-file returns to the next line in the current file. The use of this option \
+closes off the current file and continues with the include file. This option can be used with V4 conditional-line processing to move from one file to another."
+Opt	Tab		"The input is taken to be in tab-delimited format."
+Opt	Embedded		"The first column of the input is assumed to be the macro name and following columns are data (where columns are delimited by tabs or commas as described above). If the first column is blank then the previously defined macro is used and the remaining columns are treated as data."
+Opt	Macro	[bname,]name	"The macro " Param:name " is to be invoked for each row of this table. If the optional " Param:bname " is \
+given is used when parsing XML files (see " Command:Include " for more information). The " Param:name " macro is always invoked \
+after the last element of the row has been parsed."
+Opt	Minimum	num	"Skip any input lines that are less than " Param:num " characters in length."
+Opt	Section	name	"Declare the V4 section(s) to be " Param:name " for the duration of the include."
+Opt	Table	name	"The input is parsed row-by-row according to the format specified in the V4 table. If the \
+specified table is not currently defined then V4 attempts to evaluate [UV4:TableDefine " Param:name "] where " Param:name " is \
+the table name. If the table is still not defined then an error is generated."
+Opt	XML		"The input is assumed to be in XML format. See below for more discussion."
+Opt	Blanks		"Any blank lines found in the input are to be ignored."
+Examples
+Ipar	"This example defines a macro to read in inventory data. The Include command reads the file 'inventory.data'. \
+The first line of the file is skipped (Header). The data file is assumed to have four columns- Id, Desc, Qty, and Price."
+EX	"{/INV( aId, aDesc, aQty, aPrice )"
+EX	" Context Add INV:{new} ;"
+EX	"Bind [INV* Id] ID:aId ;"
+EX	"Bind [INV* Desc] Alpha:aDesc ;"
+EX	"Bind [INV* Qty] Int:aQty ;"
+EX	"Bind [INV* Price] Money:aPrice ;"
+EX	"}/INV"
+EX	"Include inventory.data Macro INV Header TAB"
+IPar	"The example below defines a set of V4 tables and macros to parse an XML file. V4 handles XML files somewhat differently then \
+rows of data. V4 attempts to match each &lt;<i>xxx</i>&gt;...&lt;<i>/xxx</i>&gt; entry with a column in the current table. If \
+no match is found then it attempts to match it with a table name. If a match occurs then that table becomes the current (nested) table. \
+If two macros are defined for a table, the first is invoked when a nested table is entered and the second macro is invoked when \
+then nested table is exited. The syntactic parsing of column elements is similar to that of non-XML tables."
+EXML	"V4 Tables to Parse XML File"
+ML	Include v4
+ML	&nbsp;
+ML	Dim Client External
+ML	Dim DateTime DateTime Range Multiple
+ML	Dim Device External Multiple
+ML	Dim Directory Alpha
+ML	Dim Form  External Multiple
+ML	Dim MonitorUDT DateTime Range Multiple
+ML	Dim Process Int
+ML	Dim Status External Multiple
+ML	Dim User External Multiple
+ML	Dim ChkDisk,ChkProc,ChkBU,ChkV4,ChkDemon AggRef
+ML	&nbsp;
+ML	Table Defaults
+ML	&nbsp;&nbsp;Col DateTime Format DDMMMYY
+ML	&nbsp;&nbsp;Col MonitorUDT Format DDMMMYY
+ML	&nbsp;&nbsp;Col Process Format Hexadecimal
+ML	EndTable
+ML	&nbsp;
+ML	Table MIDASMonitor Macro MIDASMonitorB,MIDASMonitorE
+ML	&nbsp;&nbsp;Col Client *
+ML	&nbsp;&nbsp;Col MonitorUDT *
+ML	EndTable
+ML	{/MIDASMonitorB()
+ML	Context Add Client* ;
+ML	Context Add MonitorUDT* ;
+ML	Eval Echo("Starting " Client* " as of " MonitorUDT*) ;
+ML	}/MIDASMonitorB
+ML	&nbsp;
+ML	{/MIDASMonitorE()
+ML	Eval Echo("Finished Monitor of " Client* " as of " MonitorUDT*) ;
+ML	}/MIDASMonitorE
+ML	&nbsp;
+ML	Table CheckDisk Macro CheckDisk
+ML	&nbsp;&nbsp;Col Device *
+ML	&nbsp;&nbsp;Col Status *
+ML	&nbsp;&nbsp;Col Errors Int Error Int:0
+ML	&nbsp;&nbsp;Col Label Alpha FixedLength 12 Default Alpha:""
+ML	&nbsp;&nbsp;Col FreeMB Int
+ML	EndTable
+ML	{/CheckDisk()
+ML	BFAgg < ChkDisk+ #CheckDisk# Client* MonitorUDT* > ;
+ML	}/CheckDisk
+ML	&nbsp;Loop #CheckDisk# Bind [ChkDisk.. #c#] AggVal(ChkDisk* Dim:#d# #i#)
+ML	Bind [ChkDisk.. Client] AggVal(ChkDisk* Dim:Client #i+#)
+ML	Bind [ChkDisk.. MonitorUDT] AggVal(ChkDisk* Dim:MonitorUDT #i+#)
+ML	&nbsp;
+ML	Table CheckActiveProcess Macro CheckActiveProcess
+ML	&nbsp;&nbsp;Col Process *
+ML	&nbsp;&nbsp;Col User Alpha
+ML	&nbsp;&nbsp;Col CPUPercent Int
+ML	EndTable
+ML	{/CheckActiveProcess()
+ML	BFAgg < ChkProc+ #CheckActiveProcess# Client* MonitorUDT* > ;
+ML	}/CheckActiveProcess
+ML	&nbsp;Loop #CheckActiveProcess# Bind [ChkProc.. #c#] AggVal(ChkProc* Dim:#d# #i#)
+ML	Bind [ChkProc.. Client] AggVal(ChkProc* Dim:Client #i+#)
+ML	Bind [ChkProc.. MonitorUDT] AggVal(ChkProc* Dim:MonitorUDT #i+#)
+ML	&nbsp;
+ML	Table CheckBackup Macro CheckBackup
+ML	&nbsp;&nbsp;Col BackupDT DateTime
+ML	EndTable
+ML	{/CheckBackup()
+ML	BFAgg < ChkBU+ #CheckBackup# Client* MonitorUDT* > ;
+ML	}/CheckBackup
+ML	&nbsp;Loop #CheckBackup# Bind [ChkBU.. #c#] AggVal(ChkBU* Dim:#d# #i#)
+ML	Bind [ChkBU.. Client] AggVal(ChkBU* Dim:Client #i+#)
+ML	Bind [ChkBU.. MonitorUDT] AggVal(ChkBU* Dim:MonitorUDT #i+#)
+ML	&nbsp;
+ML	Table CheckV4Build Macro CheckV4Build
+ML	&nbsp;&nbsp;Col DateTime *
+ML	&nbsp;&nbsp;Col Status *
+ML	&nbsp;&nbsp;Col V3Errors Int Default Int:-1
+ML	&nbsp;&nbsp;Col V4Errors Int Default Int:-1
+ML	EndTable
+ML	{/CheckV4Build()
+ML	BFAgg < ChkV4+ #CheckV4Build# Client* MonitorUDT* > ;
+ML	}/CheckV4Build
+ML	&nbsp;Loop #CheckV4Build# Bind [ChkV4.. #c#] AggVal(ChkV4* Dim:#d# #i#)
+ML	Bind [ChkV4.. Client] AggVal(ChkV4* Dim:Client #i+#)
+ML	Bind [ChkV4.. MonitorUDT] AggVal(ChkV4* Dim:MonitorUDT #i+#)
+ML	&nbsp;
+ML	Table CheckExecDemon Macro CheckExecDemon
+ML	&nbsp;&nbsp;Col ScheduleDT DateTime
+ML	&nbsp;&nbsp;Col CurrentDT DateTime
+ML	&nbsp;&nbsp;Col DemonUpSec Int
+ML	EndTable
+ML	{/CheckExecDemon()
+ML	BFAgg < ChkDemon+ #CheckExecDemon# Client* MonitorUDT* > ;
+ML	}/CheckExecDemon
+ML	&nbsp;Loop #CheckExecDemon# Bind [ChkDemon.. #c#] AggVal(ChkDemon* Dim:#d# #i#)
+ML	Bind [ChkDemon.. Client] AggVal(ChkDemon* Dim:Client #i+#)
+ML	Bind [ChkDemon.. MonitorUDT] AggVal(ChkDemon* Dim:MonitorUDT #i+#)
+ML	&nbsp;
+IPar	"Below is a sample XML file that would be parsed by the above tables and macros. The command to start the parsing would be of the form-"
+EX	Include file.xml Table XML
+EXML	"XML File to Parse"
+ML	&lt;MIDASMonitor Client="ABC" MonitorUDT="09-Jun-03 15:51"&gt;
+ML	&nbsp;&nbsp;&lt;CheckDisk&gt;
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&lt;Device&gt;MIDAS$DKB200&lt;/Device&gt;&lt;Status&gt;Mounted&lt;/Status&gt;&lt;Errors&gt;0&lt;/Errors&gt;&lt;Label&gt;DISK1&lt;/Label&gt;&lt;FreeMB&gt;17351&lt;/FreeMB&gt;
+ML	&nbsp;&nbsp;&lt;/CheckDisk&gt;
+ML	&nbsp;&nbsp;&lt;CheckActiveProcess&gt;
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&lt;Process&gt;0002ADC7&lt;/Process&gt;&lt;User&gt;BATCH_653&lt;/User&gt;&lt;CPUPercent&gt;1&lt;/CPUPercent&gt;
+ML	&nbsp;&nbsp;&lt;/CheckActiveProcess&gt;
+ML	&nbsp;&nbsp;&lt;CheckBackup&gt;
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&lt;BackupDT&gt; 7-JUN-2003 03:43:08.09&lt;/BackupDT&gt;
+ML	&nbsp;&nbsp;&lt;/CheckBackup&gt;
+ML	&nbsp;&nbsp;&lt;CheckV4Build&gt;
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&lt;DateTime&gt;9-JUN-2003 01:31:17.43&lt;/DateTime&gt;&lt;Status&gt;Moving&lt;/Status&gt;
+ML	&nbsp;&nbsp;&lt;/CheckV4Build&gt;
+ML	&nbsp;&nbsp;&lt;CheckExecDemon&gt;
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&lt;ScheduleDT&gt;9-Jun-03 15:36&lt;/ScheduleDT&gt;&lt;CurrentDT&gt;9-Jun-03 15:36&lt;/CurrentDT&gt;&lt;DemonUpSec&gt;32547&lt;/DemonUpSec&gt;
+ML	&nbsp;&nbsp;&lt;/CheckExecDemon&gt;
+ML	&lt;/MIDASMonitor&gt;
+CMd	LogToIsct	Save Source Code in V4 Binding	V4 Debug
+CUsage	LogToIsct	"isct NoEval"
+Params	isct	"The intersection to be used in binding the following source code."
+Desc
+IPar	"This command is used to store V4 source code as a binding. All following V4 source code lines up to the " command:EndLog " command are converted to a V4 list and bound to the isct. Normally the source code is interpreted by the V4 system. The " Option:NoEval " option can be given to prevent interpretation of the source lines."
+Examples
+IPar	"This example demonstrates the use of the " command:LogToIsct " command in conjunction with the spreadsheet interface. \
+The evaluation of [Source:V4 SalesByMgr] returns a list of the source lines shown below."
+EXML	Command:LogToIsct " Usage"
+ML	"LogToIsct [Source:V4 SalesByMgr]"
+ML	"Bind [SalesByMgr UMonth..]"
+ML	" Do(Tally(OSI.. If::In(OSI.InvMonth UMonth*)"
+ML	"      (Sum::OSI.OrderAmt By::(OSI.InvMonth OSI.Mgr) Bind::[SalesBM])"
+ML	"      (Sum::OSI.OrderAmt By::OSI.Mgr ByList::[MgrList] Bind::[TSales]))"
+ML	"    EchoS("ID" "Total" Self(UMonth*)/UMonth* Echo::0)"
+ML	"    Sort([MgrList] By::Mgr.Id"
+ML	"	Do::EchoS(SSExp(SBMgr Mgr* UMonth* Cell::Mgr.Id) [TSales],0 [SalesBM],0/UMonth*))"
+ML	"    EchoS(Width::18 " "  Width::11 " " (Width::9 " ")/UMonth*)"
+ML	"   )"
+ML	"EndLog"
+CMD	Loop	Enumerate through List of Values	Macro
+Index	punctuation	General	Str("v4refcommands.htm#Command:Loop")	#	Command
+CUsage	Loop	"#table#"
+CUsage	Loop	"param = start..end"
+Params	table	"A table name. The Loop command enumerates through all columns in the table."
+Params	param	"A parameter name (single letter from A - Z)."
+Params	start	"The starting integer value."
+Params	end	"The ending integer value."
+Desc
+IPar	"The Loop command is used primarily to enumerate through all columns in a table. For each iteration, the following \
+parameters are set- #c# is set to the current column name, #q# is identical to #c# excpet that the name is enclosed in \
+quotes, #d# is set to the dimension name of the column, #i# is set \
+to the index or position of the colum in the table (1 for the first column), #m# is set to the " Command:Column " Missing option (or empty string if none), \
+and #x# for the description of the column."
+IPar	"The second form of Loop is to simply enumerate through a range of integer values."
+Examples
+EX	"Loop #Table1# Bind [Entry.. #c#] AggVal(Entry* Dim:#d# #i# #m#)"
+CMD	Pattern	Save Binding as a Pattern	V4
+CUsage	Pattern	"pisct value"
+Params	pisct	"A pattern intersection to be bound to the value. These are similar to regular intersections without the constraint of one point per dimension."
+Params	value	"The value associated with the pattern."
+Desc
+IPar	"A pattern is defined and accessed much like a normal intersection. There are differences however. First is that the order of the points in pisct is important. An evaluating intersection must have points in the same order to match. The second difference is that the pisct can contain more than one point of the same dimension."
+IPar	"When a pattern is 'matched' any points in the pattern that are ranges are not entered into the context as those dimensions but rather with the shell dimensions P1, P2, ..., Pn where n is the number of non-explicit points."
+Examples
+EX	"Pattern [Int.. TakeAway Int..] Minus(P1* P2*)"
+EX	"[10 TakeAway 4]													returns 6"
+CMD	Point	Define a Point on a Dimension	V4
+CUsage	Point	"dimension value value ..."
+Params	dimension	"The dimension for which the point is to be created."
+Params	value	"One or more value points for the dimension."
+Desc
+IPar	"This command adds points to a dimension. If a dimension is declared with the 'NoAutoCreate' option then this must be used to create points. If the dimension has been declared with 'PointCreate Point' then each point added with the Point command is added to an internal list for that dimension. All of the points defined for the dimension may be referenced with 'dimension..' or List(Dim:dimension)."
+IPar	"If a value is the name of a column in an active table then its value is used, not the literal value/column name."
+Examples
+EX	"Dim Country Dictionary"
+EX	"Point Country USA Mexico Canada"	
+EX	"Bind [Capitol USA] WashDC'										USA' parsed as Country:USA"
+CMD	Recognize	Define Recognition Pattern for V4 Parser	V4
+CUsage	Recognize	"pattern substitution [options]"
+CUsage	Recognize	"pattern `v4point [options]"
+Params	pattern	"A regular expression pattern to match"
+Params	v4point	"A V4 point to be parsed, evaluated and converted to a string that becomes the pattern value."
+Params	substitution	"A string to be substituted in place of the " Param:pattern ". Regular expression groups within the " Param:pattern " may be referenced as '\\n' where n is the group number ('\\0' for the entire pattern). Note that this string should be enclosed in single quotes if the '\\n' construct is to be used."
+Params	options	"Any of the options below."
+Desc
+IPar	"This command defines a recognition pattern for the V4 interpreter. Any V4 keyword or string (enclosed in single quotes, \
+<b>NOT</b> double quotes) may be potentially recognized and substituted. This may be used to automatically recognize points on a particular dimension, convert keywords to function references, or reformat complex points to standard V4 formats."
+Section	Options
+Opt	Evaluate		"Evaluate the substitution as a V4 point and use that evaluation as the value."
+Opt	NoCase		"Make the " Param:pattern " upper/lower case insensitive, otherwise it is case sensitive."
+Opt	Trace		"Output a trace each time the " Param:pattern " is matched. This is particularly useful when the use of a pattern does not do exactly what was intended."
+Examples
+EXWD	Recognize 'tomorrow' '{UDate:{now} + 1}' Eval	Recognizes 'tomorrow' as the date determined by evaluating the substitution string at compile time.
+EXWD	Recognize 'yesterday' '{UDate:{now} - 1}'	Recognizes 'yesterday' and substitutes it with the expression which is then determined at run time.
+EXWD	Rec "^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) ([0-9]+), ([0-9]+)$" 'UDate:\\2-\\1-\\3'	Recognizes dates such as 'Jan 2, 2002' and converts to valid UDate format.
+EXWD	Recognize 'Func.*' 'Func:\\0'	Results in a compile-time error because the substitution string matches the pattern.
+EXWD	Recognize 'Func[^:].*' 'Func:\\0' NoCase	Correctly recognizes all tokens of the form Funcxxx as being a point on the Func dimension.
+EXWD	Recognize 'uniquePoint' `V4(Unique?)	Evaluates the V4(Unique?) module and assigns the result as the value of 'uniquePoint'
+EXWD	Recognize 'uniquePoint' "V4(Unique?)" Evaluate	Assigns the string "V4(Unique?)" to uniquePoint. Each time 'uniquePoint' is referenced the V4() module is evaluated returning (another) unique point.
+EX	Recognize "\\\\$([0-9]+),([0-9]+),([0-9.]+)" 'Money:\\1\\2\\3'
+EXWD	Recognize "\\\\$([0-9]+),([0-9.]+)" 'Money:\\1\\2'	These three rules recognize patterns of the form '$n,nnn.nn' and convert to points on the Money dimension
+EX	Recognize "\\\\$([0-9.]+)" 'Money:\\1'
+CMD	Set Aggregate	Sets the Default Aggregate for Output	V4
+CUsage	Set Aggregate	"aggid"
+Params	aggid	"The identifier of the aggregate to be written into as a default."
+Desc
+IPar	"This command is used to define the default output aggregate when multiple aggregates has been open for update. See the <b>Id</b> option \
+of the " Command:Area " command."
+Examples
+EXWD	Area Create agg1.v4a Aggregate Id ag1	Open first area
+EXWD	Area Create agg2.v4a Aggregate Id ag2	Open second area
+EXWD	Set Aggregate ag2	By default, all Agg/FAgg/BFAgg commands output to agg2.v4a
+CMD	Set Ajax Errors	Defines error return mask for error handling back to AJAX web site	V4
+Index	ajax	General	Str("v4refconcepts.htm#Section" SectionId*)	command	General
+CUsage	Set Ajax Errors	"errorpattern"
+Params	errorpattern	"A string pattern set up for 2 Unicode arguments. The first argument is the error level and the second is the error message."
+Desc
+IPar	"This command defines an error-message pattern when V4 is called from the web via AJAX. When the pattern is defined, the normal processing of \
+the " IntMod:EchoE " / " IntMod:EchoW " / " IntMod:EchoA " modules is altered. Instead of the standard error message, the pattern is used to format \
+another message (typically in JSON format)."
+Examples
+EX	Set AJAX Errors "{'meta': {'status':'%1U', 'msg':%2U}}"
+CMD	Set AJAX JSON	Defines a Pattern for Returning JSON Formatted Results Back to a Web Application	V4
+CUsage	Set AJAX JSON	"jsonpattern"
+Params	jsonpattern	"A string pattern accepting a single Unicode argument. This argument is replaced with what would normally be V4 output."
+Desc
+IPar	"Normally, V4 outputs with each " IntMod:Echo " module call. A web function calling V4 and expecting a JSON result will require some sort of wrapper around \
+the output to conform to JSON standards. This can be easily done with this command. After issuing this command, all V4 output is buffered internally into a single string. \
+When the evaluation is complete, the string is merged with the given " Param:jsonpattern " and the resulting string is then output."
+EXWD	Set AJAX JSON "{'meta': {'status':'ok'}, %1U}"	set up the pattern
+EXWD	[Test]	Set up a test
+EXWD	&nbsp;Enum(Int:1..5 @Echo(JSON(Name::Str("Res" Int*) Str("The value is " Int*))))	&nbsp;
+EXWD	Eval [Test]	evaluate then expression
+EXWD	{'meta': {'status':'ok'}, 'Res1':"The value is 1",'Res2':"The value is 2",'Res3':"The value is 3"}	is the result
+CMD	Set Argument	Sets the Value of Current Macro Argument	Macro
+CUsage	Set Argument	"argname value"
+Params	argname	"The name of one of the current macro's arguments."
+Params	value	"A new value to be assigned to the argument"
+Desc
+IPar	"This command is used to set/change the value of a macro argument."
+Examples
+EX	"{/Macro(arg1, arg2, arg3)"
+EX	". . ."
+EX	"If1 not ValidPoint ZipCode arg2 Set Argument arg2 00000 ;"
+EX	". . ."
+EX	"}/Macro"
+CMD	Set BindContext	For Automatic Inclusion of Points within Bindings	V4
+CUsage	Set BindContext	"isct"
+CUsage	Set BindContext	"`isct"
+CUsage	Set BindContext	"UV4:none"
+Params	isct	"The points within the intersection " Param:isct " are included in all subsequent bindings."
+Params	"`isct"	"The points specified by the evaluation of " Param:isct " are included in all subsequent bindings."
+Params	"UV4:none"	"Stops the automatic inclusion of points."
+Desc
+IPar	"This command is to be used automatically include one or more points in bindings without having to explicitly give the points."
+Examples
+EXWD	Set BindContext [UDate:1/1/2009 factor:1.3]	Specify two points
+EXWD	Bind [alpha] beta	the actual binding becomes [alpha UDate:1/1/2009 factor:1.3] beta
+EXWD	Set BindContext UV4:none	'turns off' the automatic binding context
+CMD	Set Echo	Controls Echo of Include Lines from File	Debug
+CUsage	Set Echo	"value"
+Params	value	"How to enable echoing. If set to ON then all Include lines in the current file are echoed. If set to \
+OFF then echoing is not done. If set to an integer number then that number is stored internally and decremented by \
+one for each nested " command:Include " file. Echoing is enabled as long as the number is greater than 0. If set to ALL then \
+the current and all nested include files are echoed. If set to HTML then V4 automatically outputs HTML to bracket prompts, input, and output (see below). \
+If echoing is on then DISABLE will temporarily disable the echoing and ENABLE will make it resume. DISABLE and ENABLE have no effect if echoing is not being performed."
+Desc
+IPar	"The HTML option causes V4 to embed html span segments separating V4 prompts from V4 input from V4 output. Each span segment \
+is given a class: 'v4prompt' for prompts, 'v4input' for input into V4, and 'v4output' for all output generated by V4. This \
+is a useful option when V4 is being run for the purposes of documentation."
+Examples
+EX	"Set Echo 1"
+EX	"..."
+EX	"..."
+EX	"Include file"
+EX	"..."
+IPar	"In this example, all lines after the first Set Echo would be echoed up to the Include command. Lines read from that file would not be echoed because the counter would be decremented to 0. Lines after the Include command would be echoed however."
+CMD	Set EchoS	Control Format of EchoS() Output	V4
+CUsage	Set EchoS	"mode"
+Params	mode	"Mode should be Spreadsheet for " intmod:EchoS " to output in spreadsheet format or Text for " intmod:EchoS " to operate as " intmod:EchoT "."
+Desc
+IPar	"The " intmod:EchoS " module outputs in a format that is interpreted by spreadsheet clients. It is not a text file \
+readable by the user. When debugging it is often useful to be able to see the results before sending them to a spreadsheet. \
+This command can be used to temporarily change all " intmod:EchoS " module calls to " intmod:EchoT " without having to \
+actually change V4 code. The " IntMod:EchoS " module supports many more features (i.e. tagged arguments) than " IntMod:EchoT ", therefore \
+the " IntMod:EchoT " module ignores any tagged arguments it does not normally handle."
+CMD	Set Duplicates	Controls Handling of Duplicate Dictionary and External Points	V4
+CUsage	Set Duplicates Error	""
+CUsage	Set Duplicates Ignore	""
+CUsage	Set Duplicates Warn	""
+Desc
+IPar	"This command is used to control the handling of duplicate dictionary and external dictionary points. The default is to output a warning. The Ignore option can be used \
+to disable all messages. The Error option generates a V4 error when a duplicate is encountered."
+EXWD	Dim X External	define dimension
+EXWD	Point X a b c d	create points on dimension
+EXWD	POINT X a	generates warning (default) that X:a is a duplicate
+EXWD	Set Duplicates Ignore	turn off warning
+EXWD	POINT X b	no warning or error is generated
+CMD	Set Errors	Controls handling of V4 Errors and Messages	V4
+CUsage	Set Errors EchoE	"filename"
+CUsage	Set Errors Output	"filename"
+CUsage	Set Errors URLonError	"url"
+CUsage	Set Errors	"mode"
+CUsage	Set Errors None	""
+Index	Errors	Command	Str("v4refCommands.htm#Command:Set Errors")
+Index	Output	General	Str("v4refCommands.htm#Command:Set Errors")
+Index	URLonError	General	Str("v4refCommands.htm#Command:Set Errors")
+Index	Compiling	General	Str("v4refCommands.htm#Command:Set Errors")
+Params	filename	"Is a filename to be updated with all V4 error and " IntMod:EchoE " output."
+Params	url	"Is a URL to be used as a destination after the (presumed) WWW application outputs an error message."
+Params	mode	Option:Compiling " to enable compiler-only error messages, " Option:Interpreting " (default) for full V4 error messages and context information."
+Desc
+IPar	"This command controls various aspects of error handling within V4. The " Option:Output " option forces errors to a specific file (as opposed to stdout). \
+The " Option:URLonError " option specifies a target web address to be followed after a web error. The " Option:Compiling " and " Option:Interpreting " options control the type of \
+error message that is output. The " Option:Compiling " option only outputs the error and location. The " Option:Interpreting " option outputs the error, location, and \
+V4 context/environment at the time of the error. The " Option:None " option resets the internal V4 error count."
+Examples
+EXWD	Set Error Compiling	Limits error messages to just the error and source location
+EXWD	Set Error Output foo.err	Directs all error messages to the file foo.err
+CMD	Set Logical	Defines a Logical Device/Path	V4 Database
+CUsage	Set Logical	"logdev = path"
+Params	logdev	"The name of the logical device. This device name may preface a file specification. A colon delimits the device name from the remainder \
+of the file path."
+Params	path	"A full or partial directory path. The " Param:logdev " may be substituted for the " Param:path "."
+Desc
+IPar	"Logical devices are a convenient way of altering file paths without having to change detailed code."
+IPar	"The use of the equal sign between the logical device name and path is optional."
+Examples
+EXWD	Set Logical v4_Lib=d:/Source/V4Library/	Assigns the path d:/Source/V4Library to logical device v4_Lib
+CMD	Set LogToIsct	Enables/Disables the LogToIsct Command	V4
+CUsage	Set LogToIsct	"mode"
+Params	mode	"DISABLE to disable the operation of the " Command:LogToIsct " command, ENABLE (default) to enable the command."
+Desc
+IPar	"This command is primarily used to disable the operation of the " Command:LogToIsct " command. Disabling this command \
+may be useful when a V4 include file is to be included multiple times/places, but the logging of include text is only \
+necessary once."
+EXWD	Set LogToIsct DISABLE	Disables the command.
+CMD	Set MacroBind	Controls Macro Storage	Macro
+CUsage	Set MacroBind	"isctmask point"
+CUsage	Set MacroBind	"isct "
+Params	isctmask	"An intersection mask to be used for storing macro. The current macro name is indicated by an asterisk in the mask."
+Params	point	"The point to use to store a macro, usually of the form dim:{new}."
+Desc
+IPar	"This option is used to control how macros are stored in a V4 area. The intersection mask, " param:isctmask ", should contain an asterisk '*' which is replaced with the name of the current macro. The " param:point " is evaluated and the integer value associated with the point is used as a unique key to store the macro in the 'BigText' format. The intersection and value are bind'ed together and the binding area selected is also used to store the actual macro. Note that when the Set MassUpdate option is set, macro values are cached within the V4 runtime to provide faster processing."
+Examples
+EX	"Dim Macro Int PointCreate New"
+EX	"Set MacroBind [* Dim:Macro] Macro:{new}"
+EX	"Set MacroCall [* Dim:Macro]"
+IPar	"This example gives the standard macro setup found in v4kernel.inc. The dimension Macro is declared with PointCreate New. The MacroBind mask includes the current macro name ('*') as well as a point to use to store the macro. The MacroCall mask is the same and is used to retrieve a macro value."
+CMD	Set MacroSave	Enables saving of macro definitions within V4 area	Macro V4
+CUsage	Set MacroSave	""
+Desc
+IPar	"Normally macros are defined and used at compile time. Macro definitions are lost when a V4 process terminates. This \
+option may be enabled to force V4 to save all subsequent macro definitions within the current writeable V4 area. These \
+macros may then be referenced at a later time (in another process) without having to read in the actual source file definitions."
+IPar	"A point is added to the Dim:UMacro dimension for each defined macro when this option is enabled. 'UMacro..' may \
+be used to enumerate through all defined macros. The actual text definition of a macro may be obtained through the \
+intersection [UMacro:" Param:macroname " UV4:Definition]."
+CMd	Set MassUpdates	Enables Mass Update Mode	V4
+CUsage	Set MassUpdates	""
+Params	none	"This command requires no parameters."
+Desc
+IPar	"The use of this command tells the V4 environment that many bindings are coming down the pike and to optimize for this scenario. It is assumed that evaluations, other than to process the bindings, are not going to be performed. This option triggers the following:"
+IPar	"Enables the internal caching of macro values."
+Ipar	"Disables the updating of context points with the addition of each new binding. This may cause some valid evaluations to fail, thus the use of this command is urged only for loading areas with bindings and aggregates."
+IPar	"Inhibits the rewriting of certain summary structures with each binding. These structures are held internally and written out with the final Area Close command."
+CMD	Set MaxAllowedErrors	Sets Maximum Allowed Errors before Abort	Debug
+CUsage	Set MaxAllowedErrors	"number"
+Params	number	"The number of allowed processing errors before V4 terminates."
+Desc
+IPar	"This command sets an internal counter which is decremented with each V4 error detected. When the counter hits zero, V4 terminates processing and exits. The initial setting for this parameter is currently set to 100, meaning that after 100 processing errors, V4 will abort."
+CMD	Set MaxPointOutput	Sets Maximum Characters When Displaying a Point	V4
+CUsage	Set MaxPointOutput	"characters"
+Params	characters	"The maximum number of characters to display in a point."
+Desc
+IPar	"This command sets the maximum number of characters to display in a point. This is useful for points such as lists \
+and intersections that may require a large number of characters to display. The default is 100 characters. Points that are \
+truncated end with \"...\""
+IPar	"Note that this is an approximate maximum. V4 might go over this limit as it will not truncate a point within a point \
+to limit the outer point to the exact number of characters."
+Examples
+EXWD	Set MaxPointOutput 50	sets the maximum to 50 characters
+CMD	Set Parameter	Assigns Value to Macro Parameter	Macro
+CUsage	Set Parameter	"parameter value"
+CUsage	Set Parameter	"parameter += value"
+Params	parameter	"The parameter to be set. A parameter is a single character upper case letter. If the parameter is prefaced with a ' (single back quote) then it is evaluated first as a V4 point (e.g. if it is an intersection it is evaluated.)"
+Params	value	"The value for that parameter- a text string or numeric."
+Desc
+IPar	"This command is usually used with macro calls to save one or more pieces of information between macro calls. Up to 26 different parameters may be set, one for each letter of the alphabet. The parameter values are referenced by enclosing the letter in cross-hatches (example #S#). Both alphanumeric and numeric parameters are supported."
+IPar	"The use of the plus-equal adds the value into the parameter. Numeric parameters can also be automatically incremented using the '#x+#' construct. Each reference of this form automatically increments the parameter value by one. This is useful in defining sequential V4IS and Aggregate fields (see second example below)."
+IPar	"Parameters may also be set in the command line starting V4. See the '-rp' option in <i>V4 Startup Switches and Options</i>."
+Examples
+EX	"{/HEADER( aDim, aCounter, aTitle )"
+EX	"Set Parameter D aDim ;"
+EX	"..."
+EX	"}/HEADER"
+EX	""
+EX	"{/BODY( aArg1, aArg2, ... )"
+EX	"Bind [#D#:aArg1 Value] Int:aArg2 ;"
+EX	"..."
+EX	"}/BODY"
+EX	""
+EX	"HEADER( SUB, 123, 'This is the title' )"
+EX	"BODY( CODE1, 400, ... )"
+EX	"..."
+IPar	"The HEADER macro saves the first argument as the #D# parameter. Subsequent BODY macro calls reference the parameter, in this case SUB. The parameter D will remain as SUB until another HEADER macro is invoked."
+IPar	"The second example, below, demonstrates the use of the auto-incrementing feature-"
+EX	"Set Parameter n 0"
+EX	"Bind [Sales.. Date] AggVal(Sales* Dim:UDate #n+#)"
+EX	"Bind [Sales.. Cus] AggVal(Sales* Dim:Cus #n+#)"
+EX	"..."
+Cmd	Set Output	Controls the Format of V4 Output Files	Database
+CUsage	Set Output	"mode"
+Params	mode	"The mode or format of the output file. The allowed values are ASCII (default), UTF16 for 16-bit characters \
+(endian of the running machine), UTF16be for 16-bit big-endian, UTF16le for little-endian, UTF8 for UTF-8 encoded output, \
+and UTF8nh for UTF-8 encoded output without the <a href='http://en.wikipedia.org/wiki/Byte_Order_Mark' target='_blank'>byte order mark</a> (BOM) at the beginning of the file."
+Desc
+Par	"This command is used to set the format of subsequent V4 output where the output format is not explicitly declared \
+(for example the '>' construct within the " Command:Evaluate " command). Options within the " IntMod:Output " module can \
+be used to override this command for a given output stream."
+Par	"The UTF16, UTF16be, UTF16le, and UTF8 options all create files with a <a href='http://en.wikipedia.org/wiki/Byte_Order_Mark' target='_blank'>BOM</a> at the beginning of the file. Web pages \
+in UTF-8 format should use the UTF8nh option but include '<meta http-equiv='Content-Type' content='text/html;charset=UTF-8'>' within the \
+header section of the page."
+Examples
+EXWD	Set Output UTF8nh	Sets the output format to UTF-8 without BOM.
+Cmd	Set PointMax	Sets Maximum Number of Points in Tally()	Debug
+CUsage	Set PointMax	"number"
+Params	number	"The maximum number of points to scan in a " IntMod:Tally " module."
+Desc
+IPar	"The PointMax set command is a debugging tool to limit the number of points scanned in a tally operation. This command may be repetitively used to set different maximums for different Tally's."
+Examples
+EX	"Set PointMax 1500"
+CMD	Set QParameter	Assigns Quoted Value to Macro Parameter	Macro
+CUsage	Set QParameter	"parameter value"
+Params	parameter	"The parameter to be set. A parameter is a single character upper case letter. If the parameter is prefaced with a ' (single back quote) then it is evaluated first as a V4 point (e.g. if it is an intersection it is evaluated.)"
+Params	value	"The value for that parameter- a text string or numeric."
+Desc
+IPar	"This command is usually used with macro calls to save one or more pieces of information between macro calls. Up to 26 different parameters may be set, one for each letter of the alphabet. \
+This command is similar to the " Command:"Set Parameter" " command except that the " Param:value " is enclosed within double qoutes."
+IPar	"Quoted parameters may also be set in the command line starting V4. See the '-rp' option in <i>V4 Startup Switches and Options</i>."
+Examples
+EXWD	Set Parameter a "now is the time"	sets parameter a
+EXWD	Eval Echo(#a#)	outputs "nowisthetime" because #a# is expanded without quotes
+EXWD	Set QParameter b "for all good men"	sets parameter b
+EXWD	Eval Echo(#b#)	outputs "for all good" because #b# is expanded as a single quoted string literal
+CMD	Set Section	Sets Section(s) to Load (same as -rs startup)	V4
+CUsage	Set Section	"name"
+CUsage	Set Section	"name, name, ..."
+CUsage	Set Section	""
+Desc
+IPar	"This command defines the V4 source code sections to be loaded or executed. It is identical to the '-rs' startup option. If the command is given \
+with no arguments then any previous sections are cleared."
+CMD	Set TableSave	Enables Saving of Table/Column Definitions within a V4 Area	V4
+CUsage	Set TableSave	""
+Desc
+IPar	"Normally table and column definitions are defined only throughout the process that reads the table definition. This \
+command forces V4 to save all subsequent table/column definitions in the current writeable V4 area. Future V4 processes may \
+reference the tables by opening the V4 area. Re-reading the actual table defintions from the source file are unnecessary."
+IPar	"A point is added to the Dim:UTable dimension for each defined table when this option is enabled. 'UTable..' may \
+be used to enumerate through all defined tables. The actual text definition of a table may be obtained through the \
+intersection [UTable:" Param:tablename " UV4:Definition]."
+CMD	Set Trace	Controls Various Debugging/Trace Features	Debug
+CUsage	Set Trace	"tracelist"
+Params	tracelist	"One or more of the trace options listed below. More than one option may be included by separating them with commas."
+Desc
+IPar	"The various trace options are listing below. This command normally overrides any previous settings. You may preface the options below with a plus (+) or minus (-) to incrementally set/reset particular options."
+Section	Set Trace Options
+Opt	AddContext		"Output a trace message every time a point is added to the context."
+Opt	All		"Output all trace messages. Note that this will generate more trace messages than you could possibly decode."
+Opt	Arith		"Trace all arithmetic errors such as divide by 0"
+Opt	AutoContext		"Output a trace message every time an auto-context evaluation is executed."
+Opt	BindEval		""
+Opt	Bindings		"Output a trace for each binding saved."
+Opt	Compare		"Output a trace for each point comparison in an evaluation (this generates a considerable amount of output)."
+Opt	Dimensions		"Enables compile-time tracing of dimension usage/reference. See the " TagResName:References " tag in the " IntMod:Dim " \
+module for details on access this information."
+Opt	Errors		"Outputs errors as they occur. This option triggers a trace of all errors (even if a nested error is eventually trapped)."
+Opt	EvalPt		"Traces evaluations of the " IntMod:EvalPt " module."
+Opt	EvalToContext		"Not currently used."
+Opt	Frames		"Generate a trace for each context frame created."
+Opt	IsctFail		"Generate a trace of all [UV4:IsctFail] evaluations"
+Opt	Lists		"Output a trace message for each list update via Insert/Append from the V4 interpreter."
+Opt	Log		"Output a trace for each intersection evaluated."
+Opt	Log	start	"Output a trace for each intersection evaluated but do not start until after V4 has evaluated " Param:start " \
+intersections (see " IntMod:V4 "(" TagName:Count "::Evaluations) option for determining current number of evaluations)."
+Opt	Macro		"Output a trace for each macro definition recorded. This can be useful for finding a macro that has not been properly terminated."
+Opt	NBLBindings		"Output a trace as each binding bucket is accessed (generates considerable output!)"
+Opt	Optimize		"Used with the " TagResName:Optimize " tag to get a trace of each optimized point."
+Opt	Progress		"Output a trace at the begin and end of each " intmod:Tally " and " IntMod:Enum " operation."
+Opt	Progress	num	"Only outputs a trace if there are at least " Param:num " points being processed."
+Opt	Recursion		"Sets an immediate breakpoint if V4 detects that a binding has been invoked recursively."
+Opt	TallyBind		"Output a trace of all bindings generated by a " intmod:Tally "."
+Opt	TimeStamp		"Prefix all V4 status/progress/debug messages with a date-time/cpu-usage time stamp."
+Opt	V4IS		"Output a trace of any V4IS access and/or processing errors."
+Opt	XDB		"Trace all external database activity and errors."
+Examples
+EXWD	Set Trace Progress	traces the progress of Tally() and Enum()
+CMD	Structure	Define a V4IS Structure	Files	Database
+CUsage	Structure	"ref sub index name bytes offset max"
+Params	ref	"The file ref associated with this structure."
+Params	sub	"The substructure index, 0 for the top level structure."
+Params	index	"Not used."
+Params	bytes	"The total length, in bytes, of the structure."
+Params	offset	"The offset or starting byte relative to the parent structure."
+Params	max	"The maximum number of bytes in the structure."
+Desc
+IPar	"The Structure command is used with the Element command to define V4IS structures and fields (elements) for use by the " intmod:V4ISVal " module."
+Examples
+EX	"See the Element command for Examples."
+IPar	"This puts a trace on the progress of each " intmod:Tally " and enters the interactive debugging mode on failed intersections."
+CMD	Table	Define a Dataset	Database
+CUsage	Table	"name options"
+Params	name	"The name of the table."
+Params	options	"Any of the below options."
+Desc
+IPar	"The Table command  is used to start the definition of a new table. It must be followed by one or more Column \
+commands. The table definition is terminated with the EndTable or End command. The optional Macro argument is used to \
+associate a macro with each row of the table (i.e. the macro is invoked for each row). The optional Header argument \
+can be used to skip one or more lines at the beginning of table. The values in a row are assumed to be separated with \
+tabs (Tab) or commas (CSV). Fixed format (fixed width) columns are also permitted and are specified with the Column \
+commands."
+IPar	"The <b>Prefix</b> and <b>Suffix</b> command options are used to add/append a fixed string to each column name. This can be useful \
+when creating a table with elements that all match elements of another table or record but need to be somehow distinguished from the originals. \
+Note that if the dimension for a column is specifified with an asterisk ('*') then the column name given (without a prefix/suffix) is used."
+Section	Table Options
+Opt	Filter	isct	"Evaluate the filter " Param:isct " for every input line."
+Opt	Header	num	"Skip the first " Param:num " (header) line of the input file."
+Opt	Continued		"Long input lines may be continued by ending a continued line with a backslash character."
+Opt	Comment	chars	"Any line beginning with one of the characters in " Param:chars " is considered a comment line and skipped."
+Opt	CSV		"The input is taken to be in comma-delimited format."
+Opt	Delimit	char	"Use " Param:char " as the column delimited character."
+Opt	Dim	dims	"Associates one or more dimensions with the table."
+Opt	Tab		"The input is taken to be in tab-delimited format."
+Opt	Embedded		"The first column of the input is assumed to be the macro name and following columns are data (where columns are delimited by tabs or commas as described above). If the first column is blank then the previously defined macro is used and the remaining columns are treated as data."
+Opt	Macro	[bname,]name	"The macro " Param:name " is to be invoked for each row of this table. If the optional " Param:bname " is \
+given is used when parsing XML files (see " Command:Include " for more information). The " Param:name " macro is always invoked \
+after the last element of the row has been parsed."
+Opt	Minimum	num	"Skip any input lines that are less than " Param:num " characters in length."
+Opt	Other	string	"Associates a user-defined " Param:string " with the table. See the " IntMod:Table " module for more information."
+Opt	Prefix	string	"Add the " Param:string " to the beginning of each column name in the table."
+Opt	Suffix	string	"Appends the " Param:string " to the end of each column name in the table."
+Opt	XML		"The input is assumed to be in XML format. See below for more discussion."
+Opt	Blanks		"Any blank lines found in the input are to be ignored."
+Examples
+EX	Table MidasUOM Macro MidasUOM
+EX	&nbsp;&nbsp;Col Midas Alpha Ignore
+EX	&nbsp;&nbsp;Col UOM *, Id UOMId, UOMType Int, Desc Alpha
+EX	EndTable
+EX	{/MidasUOM()
+EX	Point UOM UOM* ;
+EX	Context Add UOM* ;
+EX	Agg <UOM* #MidasUOM# > ;
+EX	}/MidasUOM
+EX	Loop #MidasUOM# Bind [UOM.. #c#] AggVal(UOM* Dim:#d# #i#)
+EX	""
+EX	Table MidasUOME Macro MidasUOME
+EX	&nbsp;&nbsp;Col Midas Alpha Ignore
+EX	&nbsp;&nbsp;Col Index Int, Factor Num, Suffix Alpha, Desc Alpha
+EX	EndTable
+EX	{/MidasUOME()
+EX	Agg <UOME+ #MidasUOME# UOM*> ;
+EX	}/MidasUOME
+EX	Loop #MidasUOME# Bind [UOME.. #c#] AggVal(UOME* Dim:#d# #i#)
+EX	Bind [UOME.. UOM] AggVal(UOME* Dim:UOM #i+#)

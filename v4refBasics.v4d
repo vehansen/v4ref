@@ -1,0 +1,879 @@
+Intro	Concepts	V4 Concepts
+Section	Dimensions and points
+Section	Abbreviations Used in This Manual
+Index	ctx	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	dim	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	isct	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	pt	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"This manual will make use of the following abbreviations: ctx for context, dim for dimension, isct for intersection, p or pt for point."
+Section	Intersections and Bindings
+Index	intersection	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"Knowledge is represented by binding the intersection of two or more dimensional points to a value point. One way of conceptualizing this is through the intersection of two or more points in a multidimensional space. At that intersecting point is the value point. The process of associating the intersection of points to a value is called binding. Note that an intersection is itself a point along the Intersection dimension."
+IPar	"The syntax for specifying an intersection is [p1 p2 ... pn] where pi are the points to be intersected. A binding is done by associating a value point to an intersection. There are several ways to do this in V4."
+Section	Internal Modules
+Index	module	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"V4 defines a special dimension, IntMod, and points along this dimension are internally defined modules which the V4 runtime can execute. Syntactically, the user references an internal module like a procedural language module, that is name(p1 p2 ... pn) where name is the IntMod name and pi are the argument points. Internally, internal modules are handled as a two point intersection. The first point being the internal module point and the second being a list of points corresponding to its arguments."
+Section	Evaluating an Intersection
+Index	evaluation	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"An evaluator is a process, which given an intersection, returns the value point associated with that intersection. If the value is itself an intersection then the process (usually) repeats until a non-intersection value is returned."
+EXWD	Bind [Salary Emp:123] Int:25000	bind NId:Salary and Emp:123 to Int:25000
+EX	Bind [Benefits Emp:123] Int:4000
+EXWD	= [Salary Emp:123]	evaluate the intersection of NId:Salary and Emp:123
+EXWD	25000	V4 outputs 25000
+EX	Bind [Cost Emp:123] Plus( [Salary Emp:123] [Benefits Emp:123] )
+EXWD	= [Cost Emp:123]	evaluate the intersection of NId:Cost and Emp:123
+EXWD	29000	V4 outputs the sum of the two nested intersections
+IPar	"In the above example, the cost of employee 123 is defined to be the sum of his salary and benefits. The V4 interpreter evaluates the two nested intersections to " IntMod:Plus " and the " IntMod:Plus " intmod itself to return the answer of 29000."
+Section	Context
+Index	context	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"A context is an independent set of points with the constraint that no two points belong to the same dimension. Points can be added to the context. If a point is added to the context and another point of the same dimension already resides in the context then the new point replaces the old. For example if Int:20 were in the context and Int:15 was added, then the Int:20 would be replaced with Int:15. A point in the context can be referenced as dim* which means the point value for dimension dim in the context."
+Section	Context Frames
+Index	frames	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"The context also supports a frame construct. This is the ability to, in effect, create a stack of linked contexts. Every context frame behaves as a new context set. Referencing a point in the entire context is done by searching the current frame for the dimension, then the prior frame, then the prior-prior, etc. When a frame is removed from the context, all points associated with the frame are also removed."
+EXWD	Context Add Int:123	add the point Int:123 to the context
+EXWD	Context Push NewFrame	create a new context frame called NewFrame
+EXWD	Context Add Int:456	add Int:456 to the context
+EXWD	= Int*	determine current Int point on context
+EX	456
+EXWD	Context Pop	pop NewFrame off of context
+EXWD	= Int*	determine now current Int point
+EX	123
+IPar	"In this example, Int:123 is added to the context, then a new frame is created and Int:456 is added. Since a new frame exists with no points, the Int:123 is not replaced but Int:456 is simply added to the new frame. The command 'Context Pop' removes the most recent frame and all points associated with it leaving Int:123 in the context."
+Section	Removing a Point from Context
+IPar	"A point can be explicitly removed from the context by using the " Param:dim ":{undefined} construct. Adding this point \
+replaces a defined point on dim with the undefined point. Note that " Param:dim "~ may also be used."
+IPar	"Bindings may also be specified with an undefined point-"
+EX	Bind [xyz dim:{undefined}] value
+IPar	"The above binding will match only if dim is undefined in the current context."
+IPar	"See also 'Removing Context Points after Binding Match' in the Advanced V4 Concepts section."
+Section	Evaluating with Context
+IPar	"Much of the power of the V4 model comes from the ability to evaluate an intersection in a given context. \
+Instead of completely specifying all points in an intersection to be evaluated, V4 permits partial specifications and pulls the remaining points from the current context. This is not easy to comprehend so a few simple examples are in order."
+EX	Bind [Name Cus:123] "John Smith & Sons"
+EX	Context Add Cus:123
+EX	= [Name]
+EX	Alpha:"John Smith & Sons"
+IPar	"In this example Cus:123 is added to the context and the intersection [Name] is evaluated. V4 automatically incorporates all points in the context into the evaluation to come up with the answer. To paraphrase, the evaluation of [Name] is asking 'In the current context what is the name?' and since the context contains Cus:123 we are currently referring to that customer, thus the name in question must be that of customer 123."
+IPar	"The use of the context in evaluating intersections paves the way for a new class of programming environments that can dynamically react to a varying context. Programs need no longer require data to be explicitly defined and referenced. Instead programs can request data by its generic name and let the current context fill in the specifics. For example a context point of language (Language:English, Language:Spanish) can be used to change the prompts and messages on a screen for different users. The dimension point of Calendar (Calendar:Fiscal, Calendar:Yearly) can be used to show sales based on a fiscal year or a calendar year for different users in a large company. The use of dimensions for Prompts, ScreenPosition, and Format can be used to change the way screens and data are formatted based on user, group, or company preferences."
+Section	Ambiguity
+Index	ambiguity	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"This capability unfortunately does not come without a price and the two big issues to resolve are performance and ambiguity. The performance issue is getting the evaluator to work at the speeds needed to make this a usable product. As it turns out this is not as hard as it may seem and V4 is currently doing many real world problems on PC based platforms. The ambiguity issue can be demonstrated by the simple example-"
+EX	Bind [Name Cus:123] "John Smith & Sons"
+EX	Bind [Name Vendor:543] "Smith Supply"
+EX	Context Add Cus:123 Vendor:543
+EX	= [Name]
+EXWD	???	What name- vendor or customer?
+IPar	"Here we have both a customer point and vendor point in the context. What name do we return? The ambiguous nature of this request will be examined later in this manual. Suffice to say that ambiguity can be controlled and in some cases the availability of more that one answer is useful."
+Intro	Syntax	V4 Syntax
+IPar	"V4 provides many syntactic shortcuts to reduce the size of rules. This section briefly describes some of these."
+Section	Implicit Dimensions
+IPar	"Although the formal syntax for a point is " Param:dim ":" Param:pointvalue ", it is not always neccesary to specify the dimension. The following examples demonstrate how V4 will default a dimension based on the format of the value-"
+EXWD	123	Int:123 (V4 assumes an integer value is on the Int dimension)
+EXWD	123.45	Num:123.45 (Real numbers default to the Num dimension)
+EXWD	"Now is the time"	Alpha:"Now is the time" (String literals default to the Alpha dimension)
+EXWD	+123	Delta:+123 (Integer prefaced with a plus sign default to the Delta dimension)
+EXWD	-123	Delta:-123 (Ditto for minus signs)
+EXWD	Sales	NId:SALES (Symbols default to the NId dimension)
+EXWD	(pt1 pt2 ... ptn)	List:(pt1 ... ptn) (PointTs enclosed in parentheses are assigned to List)
+IPar	"Two points should be noted. First that the example above of -123 references a point on the Delta dimension, not the Int dimension. Since Delta:-123 and Int:-123 are maintained identically internally this should cause no problems using negative integer literals. Secondly, symbols default to the NId dimension unless another dimension has been assigned to the symbol with the " Command:Point " command."
+Section	Parser Recognized Patterns
+Index	patterns	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"Strings enclosed with single quotes are processed by the V4 parser in a special manner. If the string matches \
+any of the patterns as defined by the " Command:Recognize " command then the string is replaced. For instance, the command"
+EX	Recognize '([0-9]+)/([0-9]+)' 'DTInfo(UDate:{now} Month::\\1 Day::\\2)' Eval
+Par	"defines a parser pattern that recognizes single quoted strings of the form <i>'mm/dd'</i> and replaces them \
+with valid V4 points on Dim:UDate for the month and day of the current year-"
+EXWD	[SalesToDate '6/15']	is equivalent to [SalesToDate UDate:030615] (if parsed in the year 2003)
+Section	Referencing all points on a dimension - dim.. or dim:..
+Index	dim..	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	punctuation	General	Str("v4refconcepts.htm#Section" SectionId*)	..	General
+IPar	"The dim.. construct denotes all points on a dimension. When it is used in a binding it means that all points on the dimension can be matched. When it is used as a value it represents all the points currently defined on that dimension. This form may only be used on dimensions created with the PointCreate attribute."
+EX	Bind [Sales Year..] Sum(EnumCL(Cus.. @[YearlySales Year*]))
+IPar	"The example above states that Sales for any year (Year..) is defined as the sum of YearlySales for that year for all customers (Cus..). Note how the '..' takes on slightly different meanings on the left and right hand portion of the binding."
+Section	Referencing all points on the NId dimension - NId...
+Index	NId...	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"The NId dimension is the default dimension for identifiers. It is possible and sometimes useful to reference NId.. \
+in the left hand side of a binding. However doing this may result in much programmer grief unless great care is given. For \
+this reason, the V4 compiler issues a warning whenever it sees the construct 'NId..' within a binding intersection. This \
+warning may be suppressed by using the 'NId...' construct. It is identical in function to 'NId..' and its only purpose is \
+to eliminate the compiler warning."
+Section	Referencing the current contextual value of a dimension - dim*
+Index	dim*	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	punctuation	General	Str("v4refconcepts.htm#Section" SectionId*)	*	General
+IPar	"The asterisk is used after the dimension to reference the current value of a dimension. As with '..' above, it can have slightly different meanings as shown by the following example-"
+EX	Bind [Age Emp*] Int:43
+EX	Bind [Age Emp..] Div(Minus(Date:{now} [DateOfBirth Emp*]) 365)
+IPar	"In the first line, the age of the current employee is defined as 43. In the second example, the Emp* refers to the employee matched by the [Age Emp..] binding, or the current employee at the time of evaluation, not binding."
+Section	Referencing the prior contextual value of a dimension - dim**
+Index	dim**	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	punctuation	General	Str("v4refconcepts.htm#Section" SectionId*)	**	General
+IPar	"The double asterisk is used after the dimension to reference the 'prior' value of a dimension. By 'prior' we mean the contextual value not in the current frame but in one of the prior frames."
+Section	Creating a new point on a dimension - dim+
+Index	dim+	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	punctuation	General	Str("v4refconcepts.htm#Section" SectionId*)	+	General
+IPar	"New points on dimensions declared with the 'PointCreate New' attribute can be created with either the MakeP primitive or the dim+ construct."
+EX	Context(EDim+)
+IPar	"The above example creates a new point on the EDim dimension and adds it to the current context."
+Section	Undefining a Context point - dim~
+Index	dim~	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	punctuation	General	Str("v4refconcepts.htm#Section" SectionId*)	~	General
+IPar	"A point may be removed from the context by adding the <i>undefined</i> reference to the dimension- <i>dim</i>~."
+EX	[pointa pointb ... | dim~]
+IPar	"Evaluates the intersection [pointa pointb] with any points on Dim:dim first removed from the context."
+Section	Removing a Point from the Context on Binding Match - ~dim
+IPar	"A point may be removed from the context on a binding match with the <i>dim</i>~ construct."
+EXWD	Context Add 123	Add the point to the context
+EXWD	[Int.. square] {Int* * Int*}	Define 'square' of an integer
+EXWD	[~Int.. squareRmv] {Int* * Int*}	Define it again with auto-removal of Int point
+EXWD	= [square]	returns 15129
+EXWD	= [squareRmv]	also returns 15129
+EXWD	= Int*	fails because the Dim:Int point was removed from the context on the evaluation of [squareRmv]
+Section	Nested Point References - <i>dim.point</i>
+Index	dim.point	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	punctuation	General	Str("v4refconcepts.htm#Section" SectionId*)	.	General
+IPar	"Many programming languages support a dot construct that indicates a parent-child relationship or structure-field relationship. For example, Cus.Name references the Name element of the Cus structure (or relation). V4 has no such explicit parent-child relations but can achieve the same results. The example-"
+EX	Enum(Cus.. @EchoT([Cus* Id] [Cus* Name] [Cus* State]))
+Par	"enumerates through all customers and outputs each customer's Id, Name and State. V4 implements a dot structure that allows you to mimic the traditional parent-child meaning. With V4 " Param:dim "." Param:point " is taken to mean [" Param:dim "* " Param:point "]. With this we can rewrite the above example as"
+EX	Enum(Cus.. @EchoT(Cus.Id Cus.Name Cus.State))
+Par	"which is less to type and much easier to read. The V4 compiler saves the results of the previous dot construct and permits abbreviations such as"
+EX	Enum(Cus.. @EchoT(Cus.Id .Name .State))
+Par	"where only the first reference needs the 'Cus' prefix. Multiple nesting are allowed- the following two examples are identical-"
+EX	Order.BillTo.SlsRep.Manager.Name
+EX	[Name [Manager [SlsRep [BillTo Order*]]]]
+Section	Projecting a Point into Another Dimension - dim:=point
+Index	punctuation	General	Str("v4refconcepts.htm#Section" SectionId*)	:=	General
+Index	dim:=point	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"It is sometimes necessary to convert a point in one dimension into the equivalent point in another. This can be done with the " IntMod:Project " module or, more easily with the ':=' construct. For example a floating point number can be converted to an integer (with rounding) in either of these two ways-"
+EXWD	Project(Dim:Int Float:123.567)	returns Int:124
+EXWD	Int:=Float:123.567	also returns Int:124
+Section	Projecting a Point into Another Dimension - point->dim
+Index	punctuation	General	Str("v4refconcepts.htm#Section" SectionId*)	->	General
+Index	point->dim	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"This form of projection is similar to the " Param:dim ":=" Param:point " format except that the arguments are reversed. \
+This form permits the user to follow the " Param:dim " with a period ('.') and then other points."
+EXWD	a.b->c.d	is the same as [Project(Dim:C [a* b]) d]
+Section	Creating One List from Another - isct/list
+Index	punctuation	General	Str("v4refconcepts.htm#Section" SectionId*)	/	General
+IPar	"The " IntMod:EnumCL " module is used to, in effect, convert one list into another. The form of this module is"
+EX	EnumCL(list @isct)
+IPar	"The action performed is to enumerate through each point in list, evaluate isct and create a list of the results of each evaluation. This list is then returned. An alternative way of doing this is with"
+EX	isct/list
+IPar	"which is internally converted to an " IntMod:EnumCL " call."
+Section	Use of the Possessive - dim's pt
+IPar	"A single quote can be used in a binding in place of the dot-dot construct. For example, the following two examples are equivalent-"
+EX	Bind [Name Cust..] AggVal(Cust* Dim:Alpha 3)
+EX	Bind [Cust's Name] AggVal(Cust* Dim:Alpha 3)
+IPar	"The possessive may also be used within an intersection to be evaluated. The next four statements are also identical-"
+EX	Bind [Sale's State] [State Sale's ShipTo]
+EX	Bind [Sale's State] [State Sale.ShipTo]
+EX	Bind [Sale.. State] Sale's ShipTo's State
+EX	Bind [Sale's State] Sale.ShipTo.State
+Section	Caching the Result of an Evaluation - < pt pt ... >
+IPar	"Many types of database queries access the same database information several times. With V4, each access results in one or more evaluations. If hundreds of thousands or millions of points are being scanned or tallied then anything to reduce evaluations can improve performance. V4 supports a caching facility that lets the user determine when to cache and when not to. It would be better to have V4 automatically cache but because of the contextual nature this is not yet possible. The following example selects and tallies order by month-"
+EX	Bind [SumUpOrders Month..]
+EX	"  Tally(		Order.. If::In(DTInfo(Order.Date UMonth?) Month*)"
+EX	"&nbsp;&nbsp;&nbsp;&nbsp;(Sum::Order.Amount By::DTInfo(Order.Date UMonth?) Bind::[MonthSales]) )"
+Par	"Evaluating SumUpOrders will evaluate 'In(DTInfo(Order.Date UMonth?)' twice for each order selected. If there are hundreds of thousands of orders then a better way would be to-"
+EX	Bind [SumUpOrders Month..]
+EX	"  Tally(		Order.. If::In(<Order.Month> Month*)"
+EX	"&nbsp;&nbsp;(Sum::Order.Amount By::<Order.Month> Bind::[MonthSales]) )"
+EX	Bind [Order.. Month] DTInfo(Order.Date UMonth?)
+Par	"In the second example, the cached evaluation <Order.Month>, will only be evaluated once per order."
+Section	Chained Evaluation - isct,isct
+Index	chained	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	punctuation	General	Str("v4refconcepts.htm#Section" SectionId*)	,	General
+IPar	"It is often useful to evaluate or return a secondary point if the primary intersection to be evaluated fails. For example if we wanted a customer's sales history, by month, for the last three years we might evaluate the list-"
+EX	EnumCL( Month:9401..9612 @[Sales Customer*])
+Par	"which would evaluate the sales for the current customer over all months specified and return the list. However if we did not have any binding/record of sales for the customer for a particular month then we would get an error during the evaluation. This can be corrected with the " IntMod:Def " module which tests to see if an intersection evaluates-"
+EX	EnumCL( Month:9401..9612 @Def(@[Sales Customer*] 0))
+Par	"The " IntMod:Def " module would return the sales if it evaluated otherwise 0. This works but is alot to enter. To get around this 'problem', the V4 evaluator will evaluate several intersections delimited by commas in an attempt to return a value. If the first intersection in a comma delimited list of intersections does not evaluate, V4 will evaluate the second. If it fails V4 will continue with the third. This continues until the end of the chain (the evaluation fails) or a successful evaluation takes place. Our example from above could be written as-"
+EX	EnumCL( Month:9401..9612 @[Sales Customer*],0)
+Section	Failed Evaluation of an Intersection
+Index	failure	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"The ability to chain intersections as described above provides a localized method for dealing with evaluation failures. V4 also provides a more global, flexible approach to dealing with intersection evaluation failures. Bindings of the form-"
+EX	Bind [UV4:IsctFail ...] value
+Par	"can be specified. These cause V4 to attempt to evaluate [UV4:IsctFail] in the context of all of the points in a failed intersection. For example suppose the following binding has been declared-"
+EX	Bind [UV4:IsctFail Name Cus..] Str("Cus #" Cus* "??")
+Par	"and the intersection"
+EX	Cus.Name
+Par	"fails, then V4 will attempt to evaluate [UV4:IsctFail] in the context of NId:Name and the current customer. The evaluation would then match the above binding and return \"Cus #nnn??\" as the name of the customer."
+IPar	"If the binding containing the UV4:IsctFail fails and is followed by another chained intersection (see above) then this processing is disabled during the evaluation of the chain, i.e. this is not handled recursively."
+Section	Evaluation 'In the Context Of'
+IPar	"It is sometimes useful to evaluate an intersection in a particular context. While V4 modules exist to do this, it is useful to be able to specify a context as part of the evaluated intersection. The syntax for this is-"
+EX	[ point1 point2 ... | context1 context2 ... ]
+Par	"where the pointi are the points to be evaluated and contexti are points to be added to the context for the duration of the evaluation."
+Section	Infix versus Prefix Notation
+Index	infix	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	prefix	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"V4 uses what is known as prefix notation for most of its operations. For instance to add two numbers, V4 uses 'Plus(num1 num1)' rather than 'num1+num2'. Some users find this awkward and prefer to use the more traditional infix notation. This can be done within V4 by enclosing an expression in braces. The following two examples are identical."
+EX	If::GT(Order.Amt Div(Cus.YTDSales 1000))
+EX	If::{Order.Amt > Cus.YTDSales/1000}
+IPar	"Either method is acceptable and can be freely intermixed. The following table lists the allowed operators and V4 internal module equivalents"
+Table	"Infix Operators	0	0	#E6E6C0
+TE	"+" IntMod:Plus "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" "=" IntMod:EqK
+TE	"-" IntMod:Minus "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" "==" IntMod:In
+TE	"*" IntMod:Mult "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" "<" IntMod:LT
+TE	"/" IntMod:Div "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" "<=" IntMod:LE
+TE	"//" IntMod:DDiv "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" ">" IntMod:GT
+TE	"%" IntMod:Percent "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" ">=" IntMod:GE
+TE	"~" IntMod:Not "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" "<>" IntMod:NE
+TE	"|" IntMod:Or "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" "&" IntMod:And
+TE	"~=" IntMod:NIn
+Intro	Advanced	Advanced V4 Constructs
+Section	Dimension Synonyms
+Index	synonyms	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"A dimension can be given multiple synonyms. If a dimension is referenced which is currently undefined then the V4 interpreter will attempt to evaluate-"
+EX	[UV4:DimSynonym NId:dimension]
+Par	"where dimension is the name of the synonym. If the evaluation succeeds and returns a valid dimension point then that is used as the actual dimension."
+Section	The <i>none</i> Value of a Dimension	Section_None
+Index	none value	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"The CSMD model represents concepts as dimensions and instances of concepts as point on dimensions. The theoretical notion of \
+<i>none</i>-ness seems contrary to the model. Why have a point to represent no points on a dimension? Pragmatically though, \
+it can be quite useful. For instance one way to model an input form is to assign a different dimensions to each input element. \
+Entered values become specific points on each of the dimensions. But what if a date or numeric element is blank? What \
+point on the date/numeric dimension should be assigned? V4 resolves this issue by defining <i>none</i> values for many \
+types of points including time and numeric. Alpha points do not require a <i>none</i> value because an empty string is a \
+valid point."
+IPar	"The <i>none</i> values for time points is implemented with special values that cannot be confused with valid time \
+points. For example, UDate:none is stored as zero (UDate:#0) because that is not a valid date. Other date-time points implement \
+the <i>none</i> value in a similar fashion."
+IPar	"Numeric points cannot be handled this way because there are no inherently invalid values for numbers. Numeric \
+<i>none</i> values are treated as special point values within V4, not as a specific numeric value. Nonetheless one might \
+want a numeric <i>none</i> value to be considered identical to a particular numeric value. This can be done when a \
+dimension is declared by specifying the NONE attribute within the " Command:Dimension " command."
+IPar	"Projecting a <i>none</i> value into an integer or real point forces the point into its assigned none-value. If no such value has been \
+defined then the projection fails."
+EXWD	Dim Value Integer None 0	Defines a Value dimension, substitute Value:0 for Value:none
+EXWD	Context Add Value:none	Add point to context
+EXWD	EQ(Value* Value:none)	results in Logical:True
+EXWD	{123 + Value*}	results in Value:123
+EXWD	Int:=Value*	results in Int:0 (not Int:none)
+Section	Auto-Intersection Points
+IPar	"All evaluations within V4 are triggered by intersections and internal modules. Occasionally it is convenient to be able to force the intersection of a point. This can be done by declaring the AutoIsct attribute to a dimension. The following example show how-"
+EX	Dim Field AutoIsct
+EX	Point Field Name Address City
+EXWD	Bind [Cus.. Name] AggVal(Cus* Dim:Alpha 3)	Define name of customer as third field in aggregate
+EXWD	Context Add Cus:xxx	Add customer xxx to context
+EXWD	= Name	As if entered [Name]
+Section	Sample Points
+Index	sample points	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"Sometimes it is necessary to determine if a binding or rule exists on a specific point or dimension. This typically occurs in V4 bindings that are used to auto-construct other V4 bindings. The " IntMod:Def " module can be used to see if an intersection is defined but the problem becomes selecting points to use to test. For example, suppose we had bindings such as-"
+EX	Bind [Order.. Column:Date] value
+Par	"which defines the date of an order. Suppose we wanted to write a general rule such as"
+EX	Bind [TestDim.. Column..] true-or-false
+Par	"which would return true if the Column point was defined on the shell dimension TestDim. We have no way of knowing what points can be associated with the dimension specified by TestDim- integer? date? alpha? ... To resolve this problem, V4 supports a 'sample point' for each dimension allowing our test to be written as-"
+EX	Bind [TestDim.. Column..]
+EX	Def(MakeI( MakeP(TestDim* Special::Sample) Column*) Logical:True Logical:False)
+EX	= [TestDim:Dim:Order Column:Date]
+Par	"The evaluation tests whether or not '[Order:{sample} Column:Date]' is defined and returns true or false."
+Section	Removing Context Points after Binding Match
+IPar	"Once a point is inserted into the context it remains there until it is replaced by another point of the same dimension, it is explicitly removed, \
+or the frame in which it resides is destroyed. It is also possible to have one or more points removed as a result of matching to a binding. Consider the \
+example below-"
+EXWD	Context Add dim1:100	Add point to context
+EXWD	[whatIs dim1..] Echo("dim1=" dim1*)	Create binding
+EXWD	Eval [whatIs]	echos "dim1=100"
+EXWD	[readAndRemove ~dim1..] Echo("dim1 was " dim1*)	Another binding, note tilde prefix on dim1
+EXWD	Eval [readAndRemove]	echos 'dim1 was 100' AND removes dim1 from context
+EXWD	Eval [readAndRemove]	fails, dim1 no longer in context
+IPar	"The tilde prefix, '~', may only be used within an intersection. The dimension is removed from the context <b>only</b> after the succesful evaluation \
+of the binding. If the evaluation fails, no dimensions are removed."
+Section	Inheritance - IsA Relations
+Index	inheritance	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"Inheritance is a powerful feature of object-oriented languages. It lets you define rules and facts for entire families of data types. A similar facility is available within V4 when a dimension is declared with the HasIsA attribute. Consider the example below-"
+EX	Dim ShipDate UDate
+EX	Dim OrderDate UDate
+EX	Dim EntryDate UDate
+EX	Dim PickDate UDate
+EX	Here we have defined four dimensions, all of type UDate. If we wanted to define a rule that would give us the month associated with a date we could-
+EX	Bind [ShipDate.. Month] DTInfo(ShipDate* UMonth?)
+EX	Bind [OrderDate.. Month] DTInof(OrderDate* UMonth?)
+EX	...
+Par	"This would allow use to conveniently get the associated month with any of the dates, but at the expense of having a separate rule for each dimension. If we had multiple dimensions and multiple rules the number of bindings would increase with the product of the two. With inheritance we can simplify this. In the example below we define a new dimension, GenDate, which is our generalized date. We use a special binding to declare each of the date dimensions to be an instance of the generalized date-"
+EX	Dim GenDate UDate
+EX	Dim ShipDate UDate HasIsA
+EX	Dim OrderDate UDate HasIsA
+EX	Dim EntryDate UDate HasIsA
+EX	Dim PickDate UDate HasIsA	
+EX	Bind [UV4:IsA ShipDate..] Dim:GenDate
+EX	Bind [UV4:IsA OrderDate..] Dim:GenDate
+EX	Bind [UV4:IsA EntryDate..] Dim:GenDate
+EX	Bind [UV4:IsA PickDate..] Dim:GenDate
+EX	Bind [GenDate.. Month] DateInof(GenDate* Month?)
+Par	"Here we only have to define one rule on GenDate, not separate rules for each dimension. In this example, it hardly seems worthwhile to add the four extra 'UV4:IsA' bindings to save on three 'Month' bindings. But as soon as we add another rule (such as Year!) we reduce the total number of bindings from eight (4 x 2) to six (4 + 2), with five rules we reduce the total number of binding from 20 (4 x 5) to nine (4 + 5). "
+IPar	"The HasIsA attribute is not limited to a single level. If the declaration of dimension GenDate included a HasIsA then yet another level would be added."
+IPar	"It is important to note that 'UV4:IsA' bindings can be any form of V4 binding. We could just as well define ShipDate with several bindings-"
+EX	Bind [UV4:IsA ShipDate:900101..961231] Dim:GenDate
+EX	Bind [UV4:IsA ShipDate:>=970101] Dim:RecentDate
+EX	Bind [UV4:IsA ShipDate.. WhatIf:Debug] Dim:DebugDate
+Par	"Here we have defined three different 'parent' dimensions for ShipDate based on date ranges and other contextual circumstances. This capability greatly extends the inheritance model found in classical object-oriented methodologies."
+Section	Multiple Matches
+IPar	"Sometimes an evaluation can result in more than one possible answer. In most cases, V4 returns what it considers the best answer and the fact that other possible answers were available is ignored. There are situations when it is necessary to work with more than one possible answer."
+IPar	"An example of this is in an order entry environment where a customer has been promised the best price. In any kind of large order-processing system, an item will have many possible prices depending on the item, the customer, the quantity ordered, the catalogue ordered from, other items in an order, and so forth an so on. In order to give the best price, one must be able to access all possible prices in a given situation and choose the smallest."
+IPar	"Another class of problems utilizes the ability of V4 to manipulate all possible matches in descending priority of goodness. To be able to reference the next best point is very useful in what-if scenarios. For example, suppose we are trying to determine if a new packaging system is worth the capital investment. The system can reduce shipping weight by 5% and costs $75,000. By reviewing shipments over the last n months and recosting we should be able to make an informed decision based on the amount saved over a given period. However our costing module is a black box which takes an order and returns the cost to ship it (weight is only a partial component of shipping costs, zones, shipping methods, time requirements all come into play). Rather than create a new order file with weights reduced by 5%, we would like to say, 'For this purposes of this scenario, reduce order weights by 5%. With V4 this can be done with:"
+EX	Bind [Weight Order.. Scenario:FivePC] Mult( [-] Real:0.95 )
+Par	"This binding defines the Weight of all orders (Order..) in this what-if scenario as being 0.95 times what the weight would have been ([-]) had we not matched this binding."
+Section	Time
+Index	time	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"V4 supports the concept of time and the more general case of time varying points (such as the software releases or transaction processing) as a special type of dimension. In all other dimension types, the evaluator attempts an exact match of points to return a value. With points on a time dimension, V4 attempts a greater-than-or-equal match. For example:"
+EX	Bind [Name Cus:123 Time:100]  "Miss Smith"
+EX	Bind [Name Cus:123 Time:150] "Mrs. Jones"
+EX	Context Add Time:120
+EX	= [Name Cus:123]
+EX	Alpha:"Miss Smith"
+Par	"In this example, the evaluator requires an exact match on the NId dimension (Name) and Cus dimension, but not on the Time dimension. \
+In the context of Time:120, the proper name for Cus:123 is \"Miss Smith\". The example below demonstrates the use of time within V4-"
+EX	Bind [MaritalStatus Person:John Time:10] "Single"
+EX	Bind [MaritalStatus Person:John Time:20] "Married"
+EX	Bind [MaritalStatus Person:John Time:30] "Divorced"
+EXWD	Bind [What:IS List..] [`List*]	What:IS evaluates at current (context) time
+EXWD	Bind [What:WILL List..] [`List* | Time:{undefined}]	What:WILL evaluates at undefined (future) time
+EXWD	Bind [What:WAS List..] IsctVals( @[`List*] Int:2 )	What:WAS evaluates R* at one match before current
+EX	Context Add Time:25
+EXWD	[What:IS MaritalStatus Person:John]	Alpha:"Married"
+EXWD	[What:WAS MaritalStatus Person:John]	Alpha:"Single"
+EXWD	[What:WILL MaritalStatus Person:John]	Alpha:"Divorced"
+Section	Relative Date Calculations	relDateCalcs
+Index	date calculations	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"V4 supports an extensive suite of calcuations for " PntType:UYEar ", " PntType:UQuarter ", " PntType:UMonth " and " PntType:UDate " date types. \
+The table below summarizes the allowed calculations. Note that these can be chained in any meaningful length."
+Table	Date Calculations	0	0	#E6E6C0
+TE	"<b>Start</b>" "<b>Calculation</b>" "<b>Description</b>" "<b>Example</b>" "<b>Result</b>"
+TE	"date" ".<i>num</i>" "converts the date to the <i>num</i><sup>th</sup> day of the month" "UDate:5/16/2008.10" "UDate:5/10/2008"
+TE	"date" "+<i>num</i>" "adds <i>num</i> to the date" "UDate:current+3" "three days from now"
+TE	"date" "-<i>num</i>" "subtracts <i>num</i> from the date" "UDate:1/1/2010-1" "UDate:12/31/2009"
+TE	"date" ".first" "the first day of the month" "UDate:6/12/2005.first" "UDate:6/1/2005"
+TE	"date" ".last" "the last day of the month" "UDate:6/12/2005.last" "UDate:6/30/2005"
+TE	"date" ".half" "either the first or fifteenth day of the month depending on current date" "UDate:11/20/08.half" "UDate:11/15/08"
+TE	"date" ".month" "converts the date to the month in which the date resides" "UDate:3/22/07.month" "UMonth:3/07"
+TE	"date" ".qtr" "converts the date to the quarter in which the date resides" "UDate:3/22/07.qtr" "UQuarter:1/07"
+TE	"date" ".year" "converts the date to the year in which the date resides" "UDate:3/22/07.year" "UYear:2007"
+TE	"date" ".<i>dow</i>" "the closest date falling on the day-of-week" "UDate:7/22/09.mon" "UDate:7/20/09"
+TE	"date" "+<i>dow</i>" "the next date falling on the day-of-week" "UDate:7/22/09+mon" "UDate:7/27/09"
+TE	"date" "-<i>dow</i>" "the prior (or current) date falling on the day-of-week" "UDate:7/22/09-wed" "UDate:7/22/09"
+TE	"date" ".<i>month</i>" "the closest <i>month</i> relative to the date" "UDate:8/22/09.jan" "UMonth:1/2010"
+TE	"date" "+<i>month</i>" "the next month relative to the date" "UDate:7/22/09+sep" "UMonth:9/2009"
+TE	"date" "-<i>month</i>" "the prior (or current) month relative to the date" "UDate:7/22/09-sep" "UMonth:9/2008"
+TE	"month" ".<i>num</i>" "converts the date of the <i>num</i><sup>th</sup> day of the month" "UMonth:5/2008.10" "UDate:5/10/2008"
+TE	"month" "+<i>num</i>" "adds <i>num</i> to the month" "UMonth:1/2010+2" "UMonth:3/2010"
+TE	"month" "-<i>num</i>" "subtracts <i>num</i> from the month" "UMonth:1/2010-1" "UMonth:12/2009"
+TE	"month" ".current" "Converts the month to date within that month corresponding to today's date" "UMonth:3/2008.current" "UDate:3/5/08 (assuming today is fifth day of month)"
+TE	"month" ".first" "the first month of the year" "UMonth:6/2005.first" "UMonth:1/2005"
+TE	"month" ".last" "the last month of the year" "UMonth:6/2005.last" "UMonth:12/2005"
+TE	"month" ".half" "either the June or July of the year depending on month" "UMonth:11/08.half" "UMonth:7/08"
+TE	"month" ".qtr" "converts the month to the quarter in which the month resides" "UMonth:3/07.qtr" "UQuarter:1/07"
+TE	"month" ".year" "converts the month to the year in which it resides" "UMonth:3/07.year" "UYear:2007"
+TE	"quarter" ".<i>num</i>" "converts the quarter of the <i>num</i><sup>th</sup> quarter of the year" "UQuarter:2005Q1.4" "UQuarter:2005Q4"
+TE	"quarter" "+<i>num</i>" "adds <i>num</i> to the quarter" "UQuarter:2010Q3+2" "UQuarter:2011Q1"
+TE	"quarter" "-<i>num</i>" "subtracts <i>num</i> from the quarter" "UQuarter:2010Q1-1" "UQuarter:2009Q4"
+TE	"quarter" ".first" "the first month of the quarter" "UQuarter:2009Q3.first" "UMonth:7/2005"
+TE	"quarter" ".last" "the last month of the quarter" "UQuarter:2005Q4.last" "UMonth:12/2005"
+TE	"quarter" ".year" "converts the quarter to the year in which it resides" "UQuarter:2006Q2.year" "UYear:2006"
+TE	"year" ".<i>num</i>" "converts to the <i>num</i><sup>th</sup> month of the year" "UYear:2008.10" "UMonth:10/2008"
+TE	"year" "+<i>num</i>" "adds <i>num</i> to the year" "UYear:2010+2" "UYear:2012"
+TE	"year" "-<i>num</i>" "subtracts <i>num</i> from the year" "UYear:2010-1" "UYear:2009"
+TE	"year" ".current" "Converts the year to month within that month corresponding to today's date" "UYear:2008.current" "UMonth:5/2008 (assuming it is May)"
+TE	"year" ".first" "the first month of the year" "UYear:2005.first" "UMonth:1/2005"
+TE	"year" ".last" "the last month of the year" "UYear:2005.last" "UMonth:12/2005"
+TE	"year" ".Q<i>n</i>" "converts the year to the quarter" "UYear:2007.Q3" "UQuarter:2007Q3"
+IPar	"Below are some examples of date calculations."
+EXWD	UDate:current-jan.1..current	the date range from the beginning of the year to today
+EXWD	Udate:current.month.half.1..current.month.half+6.1-1	from the first day of the current half of the year to the last day
+EXWD	Udate:current-mon..current-mon+6	the current week from Monday through Sunday
+EXWD	UYear:current.11.7-thu+21	the fourth Thursday of November - Thanksgiving
+PSpec	<i>dim</i>*	"Represents the point on dimension <i>dim</i> in the current context."
+PSpec	<i>dim**	"</i>Represents the point on dimension <i>dim</i> in the prior frame in the current context."
+PSpec	<i>dim</i>..	"Represents all points on the dimension."
+PSpec	<i>dim:value</i>	"Represents a particular dimension point. The syntax of <i>value</i> depends on the declaration of the dimension."
+PSpec	<i>:value</i>	"A particular dimension point where the dimension is taken from the prior point."
+PSpec	<i>dim</i>:{Context}	"References the current value of the dimension in the context (same as <i>dim</i>*)."
+PSpec	<i>dim:</i>{Now}	"References the point on the dimension corresponding to 'now'. This is only valid for time related points."
+PSpec	<i>dim:</i>{New}	"Creates a new point on the dimension."
+PSpec	<i>dim</i>+	"same as <i>dim</i>:{New}."
+PSpec	<i>dim</i>:{Sample}	"Creates a sample point for the dimension."
+PSpec	<i>dim</i>:{Undefined}	"Creates an “undefined” point for the dimension. This point may be inserted into the context to effectively remove a point from the context."
+PSpec	<i>dim</i>~	"same as <i>dim</i>:{Undefined}."
+PSpec	~<i>point</i>	"Only valid within a binding intersection. Specifies that the dimension of <i>point</i> is to be removed from the context after successfully matching the binding and evaluating the value."
+PSpec	<i>dim:&lt;value</i>	"All points of the dimension less than <i>value</i>."
+PSpec	<i>dim:&lt;=value</i>	"All points of the dimension less than or equal to <i>value</i>."
+PSpec	<i>dim:&gt;=value</i>	"All points of the dimension greater than or equal to <i>value</i>."
+PSpec	<i>dim:&gt;value</i>	"All points of the dimension greater than <i>value</i>."
+PSpec	<i>dim:&lt;&gt;value</i>	"All points of the dimension not equal to value."
+PSpec	<i>dim:p<sub>1</sub>..p<sub>2</sub></i>	"Denotes points <i>p<sub>1</sub></i> through <i>p<sub>2</sub></i> on the dimension (example Int:1..10)"
+PSpec	<i>dim:p<sub>1</sub>,p<sub>2</sub></i>	"Denotes points <i>p<sub>1 </sub></i>and <i>p<sub>2</sub></i> on the dimension (example Color:Red,Blue)"
+PSpec	<i>dim</i>.<i>point</i>	"Is equivalent to the intersection [<i>dim</i>* <i>point</i>]. More than one point is allowed in this construction. “Customer.SalesRep.Manager.Name” reads “the name of the manager of the salesrep for the current customer and expands out to [Name [Manager [SalesRep Customer*]]]."
+PSpec	<i>.point</i>	"Assumes <i>dim.point </i>where <i>dim</i> is the dimension of the prior <i>dim.point</i> construction."
+PSpec	<i>intersection</i>,<i>point</i>	"If the evaluation of the " Param:intersection " fails then use " Param:point " as the value. \
+Multiple points can be given. [Sales Customer* Month:99-Jan],{[Sales Customer Year:1999] / 12},0 first attempts to \
+evaluate the sales for the current customer for January 1999. If that fails then it tries to determine the sales for \
+the entire year and divide by 12, and if that fails it results in 0."
+PSpec	<i>intersection</i>,,<i>point</i>	"The double comma can be used for debugging when you want to see the failure of the first <i>intersection</i>. With this construction, the <i>point</i> is ignored."
+PSpec	<i>dim</i>:=<i>point</i>	"Coerces point into dimension dim. This construct can be used to convert a point on one dimension to another. Obviously it is only defined in certain cases. The V4 runtime supports many arithmetic, string, and date-time conversions. For example, Month:=Date* coerces the current date to the corresponding month."
+PSpec	<i>point</i>-><i>dim</i>	"Coerces point into dimension dim. This construct is similar to the above but can be followed with a period ('.') and additional points (ex: a.b->c.d)."
+PSpec	<i>intersection=value</i>	"The binding of an intersection to a value point."
+PSpec	<i>name</i>[. . .]	"This is an array reference identical to Array([<i>name</i>] . . .)"
+PSpec	<i>name</i>[Dim:<i>dim</i> . . .]	"An array declaration identical to BindQE([<i>name</i>] Array(Dim:<i>dim</i> . . .))"
+PSpec	@<i>point</i>	"A quoted point. Normally, the V4 interpreter evaluates each argument point of a module. Quoted points are not evaluated. Note that modules ending in ‘Q’ imply the quoting of one or more arguments."
+PSpec	<i>`point</i>	"Force the evaluation of the point When this is a module argument and the result is a list then each point in the list is considered to be a separate argument to the module."
+PSpec	<i>intersection*</i>	"The evaluation of an intersection which is then inserted into the context."
+PSpec	<i>point<sub>1</sub>/point<sub>2</sub></i>	"Equivalent to " IntMod:EnumCL "(<i>point<sub>2</sub> @ point<sub>1</sub></i>). The point Maximum([Salary]/Emp..) evaluates the salary of all employees and returns the largest."
+PSpec	<i>tag</i>::<i>point</i>	"A tagged point may only be used as an argument to a V4 internal module. The tag simply identifies the point as a particular type of argument. A single colon separates a dimension from its value point, two colons separate a tagged value from its point value."
+PSpec	<i>tag</i>?	"A tag value reference. A module containing a tag value reference usually returns the value specified. For example Str(<i>stringpoint</i> Length?) returns the length or number of characters in <i>stringpoint</i>."
+PSpec	<i>tag</i>:::<i>point</i>	"This syntax is, in most cases identical to the two-colon format. Within certain modules, a three-colon tag indicates no change if an error occurs. For example Str(string1 Before::string2) returns the characters of string1 \
+up to the first occurance of string2. An error is generated if string2 does not appear in string1. However, with Str(string1 Before:::string2) the entire string1 is returned if string2 does not occur within it."
+PSpec	{ <i>expression</i> }	"All operations within V4 are via internal modules, there are no infix operators such as “+” or “/”. This can get confusing for most of us who are used to infix operations. The V4 interpreter will convert a traditional infix expression to prefix form when the expression is enclosed in braces. For example {Rep.Sales * [Commission]} is converted to Mult(Rep.Sales [Commission])"
+PSpec	<i>module</i>(<i>arg</i><sub>1</sub> … <i>arg</i><sub>n</sub>)	"A <a href='#IntModList'>module</a> reference."
+Intro	StartupSwitches	Running xv4.exe
+Section	Command Line Syntax
+IPar	"This section describes the startup options for xv4.exe. The xv4 program can be used to both interpret V4 language statements and manage any area (file) that is in a valid V4IS format."
+IPar	"Using xv4 as an interpreter is done with either of the following two command formats-"
+EXWD	xv4	Starts up the V4 interpreter and immediately accepts input on stdin.
+EXWD	xv4 file	Starts the V4 interpreter and immediately begins interpreting the V4 commands in " Param:file "."
+IPar	"xv4 is also used to obtain information on a V4 area, to rebuild an area, or perform a corrective procedure such as rebuilding the index. \
+A V4 area may be updated while it is currently being accessed in a multi-user environment as long as the proper sequences are followed. \
+The examples below demonstrate several ways of using xv4."
+EXML	"Viewing Basic Parameters of a V4IS Area"
+ML	xv4 -l area.dat
+ML	V4 1.300 - "Data that thinks like us"
+ML	Protected by U.S. Patent 6,470,490 - MKS Inc. (2003)
+ML	&nbsp;&nbsp;Bucket Size 16384
+ML	&nbsp;&nbsp;Version 1.300
+ML	&nbsp;&nbsp;Next Available Bucket 4 (Number of buckets = 4)
+ML	&nbsp;&nbsp;Compress Records over 100 Bytes
+ML	&nbsp;&nbsp;Maximum Record Length 16360
+ML	&nbsp;&nbsp;Data Storage Mode 0  Number of levels in directory 3
+ML	&nbsp;&nbsp;Fill Percentage on Rebuild 0
+ML	&nbsp;&nbsp;Allocation Increment 0
+ML	&nbsp;&nbsp;Record Count 1316
+ML	&nbsp;&nbsp;Global Buffer Count 0
+ML	&nbsp;&nbsp;Lock Max 0
+ML	&nbsp;&nbsp;Created Mon Jan 06 21:47:23 2003
+ML	&nbsp;&nbsp;Free Space: none
+EXML	"Rebuilding the Index While an Area is Being Accessed"
+ML	xv4 -x -pCW area.dat	First lock down the area to prevent further access
+ML	xv4 -x -k area.dat	Rebuild the indexes
+ML	xv4 -x -pR area.dat	Reopen the area and allow access
+EXML	"Compressing a Text v4b File"
+ML	xv4 -zt data.v4c data.v4b
+ML	&nbsp;&nbsp;data.v4b => data.v4c (45%)
+Section	"xv4.exe Startup Switches and Options"
+SUSBegin
+SUS	a		"Normally V4 traps memory errors, if -a is given then V4 will not trap the error and abort. This option is useful when running xv4 with a debugger."
+SUS	B		"Automatically break on the first evaluation."
+SUS	bc	num	"To set block count on sequential dump (default from area)"
+SUS	bo	num	"To set initial bucket offset for linking index-only areas"
+SUS	bs	num	"To set block size on sequential dump (default from area)"
+SUS	bs	num	"To change block size on sequential restore from that of original area"
+SUS	bs	num	"To change block size on a reformat (default from source area)"
+SUS	bsr	num	"To change block size & record size to handle records of length num"
+SUS	cb	num	"To change Global Buffer Count (on -or only)"
+SUS	cl	num	"To change Lock Max for area (on -or only)"
+SUS	d	num	"To dump out bucket " Param:num " for area"
+SUS	da		"To dump out all buckets within an area"
+SUS	dd		"To dump out all data buckets in an area"
+SUS	di		"To dump out all index buckets in an area"
+SUS	dl	bkt	"To search for index bucket(s) linking to specified bucket- <i>bkt</i>"
+SUS	f	num	"To set fileref on restore to num"
+SUS	fm		"To set fileref to that of mergefile"
+SUS	fs		"To set fileref from sequential dump (default)"
+SUS	h		"Outputs brief help text."
+SUS	i	file	"To declare an initialization file (v4i)"
+SUS	ii		"  use default v4.v4i ini file"
+SUS	k	area	"To rebuild the index of the specified " Param:area " (must be used with -x). The use of the -pCW option is also strongly if the " Param:area " is currently being accessed."
+SUS	l		"To list the V4IS parameters for the inputfile"
+SUS	lu		"To list summary disk bucket space utilization for inputfile"
+SUS	lud		"  list detailed (by bucket) space utilization"
+SUS	m	megabytes	"To set max number of wasted space in area (use with -lu)"
+SUS	m	num	"To dump or restore a maximum of num records"
+SUS	oc	new old	"To copy existing old area into another new area. Both areas must already exist. This option is for updating a V4 area in place, possibly while it is being accessed. It must be used in conjunction with the -pCW option."
+SUS	of	new old	"For fast (via vsort) restore of the " Param:old " area, header file, or sequential file to the " Param:new " area."
+SUS	oo	new old	"To restore area from sequential inputfile to file"
+SUS	om	file	"To merge records in sequential inputfile into file"
+SUS	or	new old	"Creates a clean version of the " Param:old " area as the " Param:new " area. <b>Note</b>: this option should only be used if the " Param:old " area is in a non-corrupt state."
+SUS	os	seq old	"Dumps all records in the " Param:old " area to a sequentail " Param:new " area."
+SUS	osh	hdr old	"  Creates a header only " Param:hdr " area from an existing " Param:old " area."
+SUS	pb	area	"To generate a bugchk for the " Param:area "."
+SUS	pl	area	"Privileged - List users in the " Param:area "."
+SUS	pR	area	"Privileged - Reset shared segment for the " Param:area "."
+SUS	pCE	area	"Privileged - Locks out " Param:area " and issue error if access attempted. This means any users currently accessing the " Param:area " will receive an error on the next access attempt."
+SUS	pCR	area	"Privileged - Allow future reads on the " Param:area " but block any process attempting to update the " Param:area "."
+SUS	pCW	area	"Privileged - Block all access to the " Param:area "."
+SUS	pK	area	"Privileged - Open " Param:area " and force clear of lock table"
+SUS	pO	file	"Privileged - Reopen a closed area"
+SUS	pB	num area	"Privileged - Zap global bucket " Param:num " for " Param:area "."
+SUS	pJ	num area	"Privileged - Test locks on " Param:area " n*million times."
+SUS	pL	lid area	"Privileged - Zap lock with specified lock-id " Param:lid " for " Param:area "."
+SUS	pN	num area	"Privileged - Sets next available user number to " Param:num " for the " Param:area "."
+SUS	pS	file	"Privileged - Re-synch lt->LocksIDX for area"
+SUS	re	[num]	"Set runtime echo number"
+SUS	ro	string	"Set the V4 user startup option string. This can be referenced with V4(UserOptions?)."
+SUS	rpx	value	"Set #x# parameter to the specified value"
+SUS	rpxQ	value	"Set #x# parameter to the specified value enclosed in double quotes"
+SUS	rpxq	value	"Set #x# parameter to the specified value enclosed in single quotes"
+SUS	rq		"Runs in quiet/silent mode"
+SUS	rs	list	"Only run in 'If Section " Param:xxx "' where " Param:xxx " is in " Param:list "."
+SUS	rt	num	"Set trace to " Param:num "."
+SUS	S		"V4 will output a date-time/cpu stamp with each status line. This is the same as the <b>Set Trace Timestamp</b> command."
+SUS	s	logical=value	"Locally assigns " Param:value " to " Param:logical " (environment symbol)."
+SUS	s	file	"Open <i>file</i> and read multiple <i>logical=value</i> lines within the file."
+SUS	u		"Reads the multiple Unicode descriptor files from the V4 home directory and creates a parsed binary v4UnicodeInfo.bin file within the home directory."
+SUS	v	area	"Verifies integrity of the " Param:area "'s index-data links."
+SUS	vf	area	"Verifies integrity of an " Param:area " with foreign-only keys."
+SUS	X		"Informs V4 that it is to execute a single file (to follow on command line) and then force an exit \
+when the end-of-file is reached."
+SUS	x		"Denotes OK to update existing file/area"
+SUS	y	text	"Sets the V4 input prompt to " Param:text "."
+SUS	zb	new old	"Compress the existing " Param:old " file and write out to the " Param:new " file. This compression may be performed on any (text or binary) file."
+SUS	zt	new old	"Same as -zb except that the " Param:old " file must be a text file. This option <b><i>must </i></b> be used when compression v4b's => v4c's."
+SUS	zx	new old	"Expand an " Param:old " compressed file to " Param:new "."
+SUS	%	num	"To set fill percent on rebuild/restore"
+Section	Standard Filename Extensions
+Index	v4	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	v4a	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	v4b	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	v4c	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	v4d	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	v4i	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	v4r	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	v4x	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	extension	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	filename	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"<b>.v4</b> - V4 source file."
+IPar	"<b>.v4a</b> - A compiled V4 area or V4 data aggregate file."
+IPar	"<b>.v4b</b> - A tab or comma delimited data file."
+IPar	"<b>.v4c</b> - A compressed .v4b file."
+IPar	"<b>.v4d</b> - A dictionary file (no longer used)."
+IPar	"<b>.v4i</b> - A startup include file (see next section)."
+IPar	"<b>.v4r</b> - A results file (created by " IntMod:EchoS " output)."
+IPar	"<b>.v4x</b> - An external V4 dictionary file (replaces v4d files)."
+Section	V4 Runtime Information Files
+IPar	"V4 loads information from several text files each time it is started. These files contain mandatory dimensions, \
+error message text, colors, country information, etc. The location of these files varies by operating system. On Windows \
+based systems, the files must reside in the same directory as the xv4.exe executable. On all other operating systems, \
+these files reside in a directory pointed to by the <b>v4_Home</b> logical."
+IPar	"The remainder of this section describes the current V4 startup information files."
+Section	Kernel Dimensions - v4Kernel.v4i
+Index	v4Kernel	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	kernel dimensions	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"The v4Kernel.v4i file contains " Command:Dimension " commands that defined the mandatory kernel V4 dimensions. This \
+file must be " Command:Include "d for V4 to operate properly."
+EXML	"Startup of V4 without Mandatory v4Kernel"
+ML	xv4
+ML	= {2 * 2}
+ML	?V4E- Please "INCLUDE v4" first.
+ML	i v4
+ML	= {2 * 2}
+ML	&nbsp;&nbsp;Int:4
+Section	Error Messages - v4ErrorMsgTable.v4i
+Index	errors	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"All V4 error messages, warnings, and status comments are contained in the file v4ErrorMsgTable.v4i. The format of \
+this file is <i>mnemonic</i>&lt;tab&gt;<i>message-text</i>. An internal V4 error references a message <i>mnemonic</i> which \
+is then found in the error file. The corresponding <i>message-text</i> is then formatted and output. The <i>message-text</i> \
+may contain substitution specifiers of the form %<i>nt</i> where <i>n</i> is a number from 0 to 9 and <i>t</i> is an format \
+type code. Substitution arguments are numbered from 1 to 9. The 0<sup>th</sup> argument is reserved for position-free type \
+codes."
+Table	Format Type Codes within V4ErrorMsgTable.v4i	0	0	#E6E6C0
+TE	"Code" "Description"
+TE	"d" "An integer (decimal) number"
+TE	"i" "Same as 'd' - an integer number"
+TE	"g" "A floating point number"
+TE	"f" "Same as 'd' - a floating point number"
+TE	"s" "A null terminated ASCII string"
+TE	"p" "An ASCII string truncated to 10 characters."
+TE	"P" "A V4 point"
+TE	"T" "A V4 tag name"
+TE	"D" "A V4 dimension name"
+TE	"Y" "A V4 point type (Integer, UDate, BigText, etc.)"
+TE	"E" "A V4 internal module formatted into standard V4 error message prefix"
+TE	"M" "A V4 internal module name"
+TE	"F" "The current source file and line number"
+TE	"A" "The contents of ctx->ErrorMsgAux (holds partial error messages from low level routines).<br>This argument is always specified as '%0A'"
+TE	"O" "The operating system error message corresponding to the argument error number"
+EXWD	ModArgAllEval	%1E Argument (%2i %3D..) - %0A	Entry in v4ErrorMsgTable.v4i
+EXWD	Str(Int.. hohoho)	evaluation of this results in...
+EXWD	[ModArgAllEval] Str() fail - Argument (1 Int..) - No implicit list of points associated with Dim:Int	output
+Index	v4ErrorMsgTable	General	Str("v4refconcepts.htm#Section" SectionId*)
+Section	Colors - v4Colors.v4i
+Index	colors	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	v4Colors	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"This file describes all points within any dimension of type " PntType:Color ". Each line consists of the following \
+information- <i>index</i>&lt;tab&gt;<i>name</i>&lt;tab&gt;<i>hexvalue</i> where <i>index</i> is a unique integer value for \
+a color, <i>name</i> is the name of the color and <i>hexvalue</i> is the <a href='http://www.w3.org/TR/REC-html40/types.html#h-6.5' target=_blank>24-bit hexadecimal value</a> \
+of the color."
+IPar	"The default color list is taken from the WWW list of standard colors."
+Section	HTML Content Types & Default Extensions - v4HTMLContentType.v4i
+Index	HTML	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	V4HTMLContentType	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"This file provides a map between standard WWW MIME types and file extensions. Each line is of the form \
+<i>MIME-type</i>&lt;tab&gt;<i>extension-list</i> where <i>MIME-type</i> is a standard two-part MIME specification and \
+<i>extension-list</i> is a list of one or more file extensions denoting that type."
+Section	Locale Specific Information - v4CountryInfo.v4i
+Index	country	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	v4CountryInfo	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"This file specifies each country within a dimension of type " PntType:Country " and locale information about each \
+country. The format of the file is shown by the V4 table below."
+EXWD	Table CountryInfo	Country Information Table
+EXWD	&nbsp;Col UNCode Int	the United Nations country code
+EXWD	&nbsp;Col UNAbbr Alpha	the United Nations country abbreviation
+EXWD	&nbsp;Col UNName Alpha	the United Nations country name
+EXWD	&nbsp;Col IntDialCode Int	the international calling code for the country
+EXWD	&nbsp;Col IDD Int	the internal direct dial prefix within the country
+EXWD	&nbsp;Col NDD Int	the international direct dial prefix within the country
+EXWD	&nbsp;Col ITeleMask Alpha	the format of international telephone numbers within the country
+EXWD	&nbsp;Col NTeleMask Alpha	the format of national telephone numbers within the country
+EXWD	&nbsp;Col DateMask Alpha	the format of dates
+EXWD	&nbsp;Col MonthMask Alpha	the format of months
+EXWD	&nbsp;Col DateTimeMask Alpha	the format of date-times
+EXWD	&nbsp;Col Calendar Alpha	the type of Calendar (0=Gregorian, 1=Julian, 2=Islamic, 3=ISO, 4=Hebrew, 5=Chinese, 6=Hinud)
+EXWD	&nbsp;Col Language Int	the language index (see v4LanguageInfo.v4i) for the country
+EXWD	&nbsp;Col YMDOrder Int	the year-month-day ordering
+EXWD	&nbsp;Col Currency Alpha	the currency character
+EXWD	&nbsp;Col Prefix Logical	TRUE if currency character is prefix, FALSE if suffix
+EXWD	&nbsp;Col Delimiter Alpha	the delimiter character for large numbers
+EXWD	&nbsp;Col DelNum Alpha	the number of digits between delimiters (usually 3); this may be list for unusual numeric delineations (see India)
+EXWD	&nbsp;Col RadixPt Alpha	the radix (decimal) point character
+EXWD	EndTable	&nbsp;
+Section	Language Specific Information - v4LanguageInfo.v4i
+Index	languages	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	v4LanguageInfo	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"This file describes the various ways different concepts are output in V4. It, as with all the v4i files, is a \
+tab delimited text file. The first column of each line indicates the type of line and what follows. The second column is \
+a language indicator. The first few lines of this file define the current languages. The third column is a calendar indicator. \
+The calendar codes are 0=Gregorian, 1=Julian, 2=Islamic, 3=ISO, 4=Hebrew, 5=Chinese, 6=Hindu. The different line types are given below."
+Index	LANGID	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	SDOW	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	LDOW	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	SMOY	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	LMOY	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	CMASK	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	RELTIME	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	LOGICAL	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	NOVALUE	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	SNUMS	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	TENS2090	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	NUM000	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	ORDSFX	General	Str("v4refconcepts.htm#Section" SectionId*)
+Index	TZONES	General	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"<b>LANGID</b> - Defines the supported languages."
+IPar	"<b>SDOW</b> - Short (abbreviated) days of the week."
+IPar	"<b>LDOW</b> - Long days of the week."
+IPar	"<b>SMOY</b> - Short (abbreviated) months of the year."
+IPar	"<b>LMOY</b> - Long months of the year"
+IPar	"<b>CMASK</b> - Two calendar masks. The first is for dates, the second is date and time."
+IPar	"<b>RELTIME</b> - Relative times (yesterday, today, tomorrow, now, hours, minutes, seconds)."
+IPar	"<b>LOGICAL</b> - Various ways true and false can be identified."
+IPar	"<b>NOVALUE</b> - Up to three ways that <i>no value</i> can be specified for a point."
+IPar	"<b>SNUMS</b> - The first 20 integers as words (0 - 19)."
+IPar	"<b>TENS2090</b> - Multiples of ten from 20 to 90."
+IPar	"<b>NUM000</b> - Multiples of 1000, starting with 100."
+IPar	"<b>ORDSFX</b> - Ordinal suffixes for integers 0-9"
+IPar	"<b>TZONES</b> - Timezone abbreviations in the form '<i>abbr,abbr,...=GMTOffset</i>'"
+IPar	"<b>DISTANCE</b> - Labels for various distance units (see the " PntType:GeoCoordinate " point type) where: meter=0, kilometer=1, mile=2, feet=3, yard=4, nautical mile=5"
+IPar	"<b>SPEED</b> - Labels for various speeds (distance * 100 + time where time is: second=1, minute=2, hour=3, day=4, millisecond=5, microsecond=6)"
+IPar	"<b>GEOLBL</b> - Label values for " PntType:GeoCoordinate " points"
+Intro	UV4Points	UV4 Points
+Section	What Are UV4 Points
+IPar	"The UV4 dimension is a dimension reserved for triggering special V4 actions. Various exceptions, failures, and initializations \
+are handled within V4 by evaluating an intersection containing a UV4 point. For example if an intersection evaluation fails \
+then a behind-the-scenes evaluation of [UV4:IsctFail] may take place. If this evaluation succeeds then the result is returned \
+as if it were the result of the original triggering evaluation."
+Section	UV4:AcceptorFail - Trapping Improperly Formatted Dimension Points
+Index	AcceptorFail	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+IPar	"When the V4 parser rejects a dimension point (for whatever reason but usually invalid syntax), it creates an \
+intersection of the form [UV4:AcceptorFail Dim:" Param:dimension " Alpha:" Param:pointspecification "] and evaluates it. \
+If the evaluation succeeds then the value is is used as the point value."
+EXWD	[UV4:AcceptorFail Dim:UDate Alpha..] UDate:{now}	Use today's date on any erroneously specified dates
+Section	UV4:Acceptor - User Defined Acceptor for Point Values
+Index	Acceptor	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+IPar	"The declared point type of a dimension usually defines the syntax of points on that dimension. The use of \
+the Acceptor attribute in the declaration of a dimension along with a UV4:Acceptor binding enables the programmer to \
+define a custom acceptor for dimension points."
+IPar	"When a dimension is declared with the Acceptor attribute, then the V4 parser creates an intersection of the \
+form [UV4:Acceptor Dim:" Param:dimension " Alpha:" Param:pointvalue "] and evaluates it. The evaluation should return a \
+point of the same dimension as " Param:dimension " (although V4 does not enforce this)."
+IPar	"If a dimension is declared with the ADPoint attribute then a slightly different intersection is evaluated. In this \
+case [UV4:Acceptor " Param:adpoint " Alpha:" Param:pointvalue "] where " Param:adpoint " is the point given for the ADPoint attribute."
+IPar	"If a point specification begins with the \"#\" character then this Acceptor processing is disabled and the value \
+following the \"#\" is taken, as is, as the point value."
+IPar	"The example below maps Branch:Test to Branch:#1, Branch:Sales to Branch:#1,#2,#5, and all others \
+by attempting to match the point value to one of the values of Branch.Id."
+EXML	"A Dimension Acceptor Example"
+ML	Dim Branch Int Acceptor
+ML	[UV4:Acceptor Dim:Branch Alpha..]
+ML	&nbsp;TEQ(BrId:=Alpha*
+ML	&nbsp;&nbsp;&nbsp;BrId:Test Branch:#1
+ML	&nbsp;&nbsp;&nbsp;BrId:Sales Branch:#1,#2,#5
+ML	&nbsp;&nbsp;&nbsp;Enum(Branch.. If::{Branch.Id = BrId:=Alpha*} Then::Branch*),Branch:#0)
+EXML	"Multiple Dimensions Using Same Acceptor Via ADPoint"
+ML	Dim OEPromo Int Acceptor ADPoint ETbl:70 Multiple
+ML	Dim OESource Int Acceptor ADPoint ETbl:41 Multiple
+ML	Dim OEType Int Acceptor ADPoint ETbl:174 Multiple
+ML	Dim Office Int Acceptor ADPoint ETbl:133 Multiple
+ML	[UV4:Acceptor ETbl.. Alpha..]
+ML	&nbsp;Enum(ETbl.Entries If::{ETblE.Input = Str(Alpha* UC?)} Then::ETblE.ETblIV),
+ML	&nbsp;&nbsp;EchoE("No entry (" Alpha* ") in Table #" Str(ETbl*) " - " ETbl.Name)
+Section	UV4:CodedRange - Initialize CodedRange Dimension
+Index	CodedRange	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+IPar	"The UV4:CodedRange point is used to initialize a dimension's coded range table. It is invoked within the " IntMod:In " \
+module as [UV4:CodedRange " Param:dimension "] and would most likely result in a call to the " IntMod:V4 " module to \
+initialize then range."
+EXWD	Dim ProgId CodedRange DotDotToList Acceptor Displayer Multiple	Defines CodedRange dimension
+EXWD	[UV4:CodedRange Dim:ProgId] V4(Dim:ProgId Number::200500 Range::200501..200509)	Defines the number 200500 to include the range 200501..20509
+EXWD	{ProgId:#200503 == ProgId:#200500}	results in Logical:True
+EXWD	{ProgId:#200534 == ProgId:#200500}	Logical:False
+Section	UV4:Definition - A Table or Macro Definition
+Index	Definition	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+IPar	"The " Command:"Set MacroSave" " and " Command:"Set TableSave" " commands tell V4 to save the source code definitions. \
+The definitions are store under bindings of the form [UMacro:" param:macro " UV4:Definition] and [UTable:" Param:table " UV4:Definition]."
+EXWD	[UMacro:Demo UV4:Definition]	returns the definition of the Demo macro
+Section	UV4:DimSynonym - Dimension Synonyms
+Index	DimSynonym	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+IPar	"When V4 parses a dimension reference to a non-existent dimension it attempts to map that dimension reference \
+to an existing dimension by creating an intersection of the form [UV4:DimSynonym NId:" Param:dimreference "] and \
+evaluating it. If the evaluation succeeds and returns a point on the Dim dimension then that dimension is used. \
+This allows the designer to create any number of synonyms for a dimension."
+EXWD	[UV4:DimSynonym Div] Dim:Division	Creates the synonym "Div" for the "Division" dimension
+Section	UV4:Displayer - Custom Point Displayer for Points on a Dimension
+Index	Displayer	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+IPar	"The UV4:Displayer point is used, along with the Displayer attribute in the Dimension declaration, to control \
+the output formatting of a dimension's points. It is often used in conjunction with the Acceptor attribute and UV4 point. \
+When a dimension point is to be displayed, V4 evaluates the intersection [UV4:Displayer " Param:dimension "..] and output \
+the result of the evaluation."
+IPar	"Note: This output formatting is disabled when the point is output as part of a trace or debug message by the V4 \
+runtime. The " IntMod:Str " module can be used to force formatting via this convention."
+IPar	"The example below demostrates a displayer for the Branch dimension. A Branch point is displayed as its \
+corresponding Branch.Id value."
+EXML	"An Example of a Dimension Displayer"
+ML	Dim Branch Int Displayer
+ML	[UV4:Displayer Branch..]
+ML	&nbsp;Is1(Branch* Branch.Id,BrId:UNK MakeP(Dim:BrId `EnumCL(Branch* @Branch.Id,BrId:UNK)))
+Section	UV4:DisplayerTrace - Custom Displayer for Points within Traces and Context Dump
+Index	DisplayerTrace	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+IPar	"The UV4:DisplayerTrace point is used is similar to the UV4:Displayer except that it is used by V4 to display point values \
+when a context point is displayed (error traces, Context Examine dumps). This option may be used for special formatting of a point \
+within a trace to make it easier to read and/or debug. It may also be used to inhibit or alter the value of a point within the context \
+(such as a credit card number) that you do not want to inadvertantly display."
+Section	UV4:DotDotToList - Converting dim.. to a List
+Index	DotDotToList	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+IPar	"The dim.. construct is useful for referencing all points on a dimension. In some cases, however, the points on \
+a dimension are not known ahead of time. The UV4:DotDotToList point can be used to trigger an evaluation which then \
+returns a list calculated at that instant in time. Dimensions that refer to external databases should use this feature \
+to determine, at run time, its points."
+IPar	"Note: The dimension must be declared with the DotDotToList attribute for this function."
+EXWD	Dim UYear Local DotDotToList	This attribute must be defined for the dimension
+EXWD	[UV4:DotDotToList Dim:UYear] Transform(UYear:{now} First::{UYear* - 3} Last::{UYear* + 3})	Defines UYear.. to be the 3 prior years through the three following years
+Section	UV4:EvalStream - The name of the Evaluate output stream
+Index	EvalStream	UV4	Str("v4refconcepts.htm#Section" SectionId*)
+IPar	"The UV4:EvalStream point is the name given to the output stream when redirection to a file is specified with the " command:Evaluate " command. \
+This can be used when multiple output streams have been created and this stream is no longer the default."
+Section	UV4:IsctFail - Trapping Evaluation Failures
+Index	IsctFail	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+IPar	"The UV4:IsctFail point is used to \"trap\" evaluation failures and generate a point that is to be used as the \
+result of the failed evaluation. It is most useful in providing values for missing database points. The UV4:IsctFail point \
+is removed from the context before any nested processing occurs."
+IPar	"It is extremely easy to be burned by this feature. Understanding its operation is important. When an evaluation \
+fails, the V4 interpreter checks to see if the UV4:IsctFail point has been defined. If not then the evaluation continues \
+as a failure. If the UV4:IsctFail point is defined then all of the points of the failed intersection are added to a new \
+context frame and then [UV4:IsctFail] is evaluated. If it returns a result then it is used as the value of the failed \
+evaluation. If an intersection is followed by a ," Param:point " then this processing does not occur unless the following \
+point also fails."
+EXWD	[UV4:IsctFail Cus.. Id] Str("?CusId(" Cus* ")?")	Defines a value if Cus.Id fails
+Section	UV4:EvalAE - Processing Points within the EvalAE Module
+Index	EvalAE	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+IPar	"This point is used in the evaluation of " IntMod:EvalAE " expressions. Tokens appearing within the module are \
+evaluated via [UV4:EvalAE " Param:token "]."
+Section	UV4:EvalAEVal - Validating Points within the EvalAE Module
+Index	EvalAEVal	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+IPar	"This point is used in the validation of " IntMod:EvalAE " components. Points appearing within the module are \
+evaluated via [UV4:EvalAEVal " Param:point "]."
+Section	UV4:EvalLE - Processing Points within the EvalLE Module
+Index	EvalLE	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+Section	UV4:EvalLEStar - Processing Starred Points within the EvalLE Module
+Index	EvalLEStar	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+Section	UV4:EvalLEVal - Validating Points within the EvalLE Module
+Index	EvalLEVal	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+IPar	"This point is used in the validation of " IntMod:EvalLE " components. Points appearing within the module are \
+evaluated via [UV4:EvalLEVal " Param:point "]."
+Section	UV4:TableDefine - Attempt to define a V4 Table
+Index	TableDefine	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+IPar	"The UV4:TableDefine point is used to define a V4 table at run-time if the table is not already defined. \
+Whenever a table is referenced (ex: the " Command:Include " command) and it is not currently defined then V4 will evaluate \
+[UV4:TableDefine " Param:name "] where " Param:name " is the currently undefined table. If the evaluation results in the \
+definition of the table then V4 continues. If the table is still undefined then an error is generated."
+IPar	"For example, if a table xxx has been saved via the " Command:LogToIsct " command as [Table:xxx Definition] then \
+the following can be used to dynamically load it at a later time-"
+EX	[UV4:TableDefine xxx] EvalCmd(Str(`Str(Alpha* ";")/[Table:xxx Definition]))
+Section	UV4:UOMCoerce - Coercing a Unit-of-Measure to another Type
+Index	UOMCoerce	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+Section	UV4:UOMInitialize - Initializing Unit-of-Measure Tables
+Index	UOMInitialize	UV4	Str("v4refconcepts.htm#Section" SectionId*)	UV4	UV4
+Intro	ErrsProbs	Common Errors and Problems
+Section	Err: Isct/IntMod cannot continue in column 1 of next line
+IPar	"V4 uses parenteses to enclose module arguments. Often a module will span several lines. Often a module will \
+references other modules. This leads to nested levels of parenthese which can become confusing to match. To reduce \
+confusion, V4 mandates that all continued bindings and point specifications be indented. Any V4 text appearing in column 1 \
+(excluding comments) are assumed to be the start of a new interpreter command or binding. If you have not matched up parenthese \
+or brackets correctly, V4 may still think it is continuing a binding while you think you are starting a new binding. This error \
+is the result. Check the lines prior to the error and make sure all brackets and parentheses are matched."
+Section	Err: BindList exceeds max size
+IPar	"V4 stores binding by the point with the highest " TagName:Bind " value in the binding intersection. Most of the \
+time everything works out fine. But sometimes, often within a " IntMod:Tally " this error is generated. The solution can be \
+very easy or very difficult. Here are some suggestions-"
+IPar	"Make sure that the " TagName:By " points in the " IntMod:Tally " have " TagName:Bind " values in the dimension declaration."
+IPar	"Try altering the order of points within a binding. If two dimensions have the same " TagName:Bind " value then the \
+first is used. Altering the order of points in the " TagName:By " argument alters the points in the binding intersection at the \
+end of the " IntMod:Tally "."
+IPar	"Assign a higher " TagName:Bind " value to a dimension."
+IPar	"When all else fails you may have to create a compound dimension. This can get messy. It involves creating a new \
+dimension that combines the values of two or more other dimensions and then using the " TagName:BindEval " attribute when \
+defining a dimension to glue it all together. The example below demonstrates how to combine point on an AC (aircraft) dimension \
+with those on the UMonth dimension."
+EXML	"Using the " TagName:BindEval " Attribute on a Dimension"
+ML	Dim AC Local BindEval
+ML	Dim ACMon Int Bind 6
+ML	[AC.. UMonth.. SchVisit Value..] BindQE([ACMon:=Pack1616(AC* UMonth*) SchVisit] Value*)
+ML	[AC.. UMonth.. SchVisit] [ACMon:=Pack1616(AC* UMonth*) SchVisit],0
+IPar	"Another option is to use the " IntMod:Array " module to eliminate bindings altogether."
+EXML	"Using the " TagName:BindEval " Attribute on a Dimension and V4 Arrays"
+ML	Dim AC Local BindEval
+ML	Eval BindQE([SVArray] Array(Dim:Logical AC.. [FcstMonthList]))
+ML	[AC.. UMonth.. SchVisit Value..] Array([SVArray] AC* UMonth* Value::Value*)
+ML	[AC.. UMonth.. SchVisit] Array([SVArray] AC* UMonth*)
+Section	Err: Cannot save binding ([...]) without point with bind potential
+IPar	"At least one of the points in the binding intersection must belong to a dimension with the " TagName:Bind " attribute. \
+See the " Command:Dimension " command for details."
+Section	Err: module fail - dim* - not in context
+IPar	"This literally means that you attempted to grab a value from the context that was not there. In most cases this caused \
+by a missing at-sign (\"@\") or " TagName:Do " tag."
+EXWD	Enum(Int:1..10 EchoT(Int*))	generates an error because the EchoT is evaluated as an argument before the Enum starts processing
+EXWD	Enum(Int:1..10 @EchoT(Int*))	works correctly because the EchoT evaluation is deferred until Enum processing
+Section	Err: No binding found
+IPar	"This error can have multiple causes. Here are a few of the most common."
+IPar	"The intersection you are evaluating is missing a point (and that point is not in the context)."
+IPar	"The intersection you are evaluating has too many points. Move the offending point(s) into the context or to the \
+right of the \"|\" delimiter."
+IPar	"You are confusing two similar dimensions as shown below-"
+EXWD	[Answer Money:0..100] "xxx"	this is the target binding
+EXWD	[Answer {[Value] * 10.0}]	this fails because {[Value] * 10.0} returns a point on the Num dimension, not Money
+Section	Err: Exceeded max number of nested Isct's
+IPar	"You have nested down too many intersection/module levels. This is most often the result of intersection being \
+recursively invoked. This may sometimes occur in strange and unexpected ways. The examples below demonstrate some of the \
+more common constructs leading to this error."
+EXWD	[UV4:Acceptor Dim:X Alpha..] X:=moduleorintersection	By attempting to project the result of moduleorintersection back into dimension X, you are triggering the Acceptor logic for that dimension. Use the MakeP() module instead of projection
+EXWD	[X:whatever Y:whatever NId..] xxxx	It is usually a bad idea to define intesections with "NId.." because points on \
+that dimension are used throughout. If the xxxx includes an intesection of the form [nidpoint] then it will probably \
+recurse because both dimensions X & Y have points in the context.
+Section	Problem: Aggregate value periodically appears as garbage
+IPar	"This is most likely caused by having variable length strings within a " Command:BFAggregate ". Check all string \
+values to ensure that they are the same length. The " TagName:FixedLength " " Command:Column " option can be used to force \
+all values to the same length."
+Section	Problem: Test for point equality failing
+IPar	"Two conditions must be satisfied for one point to equal another. First they both must have the same value, secondly \
+they must be on the same dimension. Use the " IntMod:EQk " or " IntMod:In " modules when you want to compare just values."
+Section	Problem: Output showing point name, not its value
+IPar	"The most likely cause for this is forgetting to enclose a point in brackets-"
+EXWD	EchoT("The answer is " Value)	results in the output: The answer is Value
+EXWD	EchoT("The answer is " [Value])	results in the correct output reflecting the evalution of [Value]
+Section	Problem: Evaluation of [UV4:IsctFail] not working as expected
+IPar	"A common cause is the use of the " TagResName:Optimize " tag within the " IntMod:Do " module. Refer to this module \
+for more information."

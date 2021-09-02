@@ -1,0 +1,873 @@
+DPTFuncCat	AlphaList	AlphaNumeric and List
+DPTFuncCat	Database	Database
+DPTFuncCat	DateTime	Date and Time
+DPTFuncCat	Numeric	Numeric
+DPTFuncCat	Special	Special Types
+DPTFuncCat	V4	V4 Related
+DPT	AggRef	An Aggregate Reference	Database
+Desc
+IPar	"This point type is primarily intended for dimensions used as \"keys\" to aggregates. Points on this dimension are stored as 32-bit integers."
+IPar	"Note: AggRef points can only be created if an Aggregate Area has been opened for update."
+Syntax
+IPar	"Points can only be created with the " Param:dim ":{new} or " Param:dim "+ construct. Existing points can be referenced \
+by entering " Param:dim ":" Param:areaindex ":" Param:index " where " Param:areaindex " is an index of a currently open \
+aggregate area and " Param:index " is an index into that area. A reference to a null-value for an area can be specified \
+as " Param:dim ":" Param:nullvalue " where " Param:nullvalue " is the language specific value for NONE (usually 'none' or \
+'null')."
+Examples
+EXML	"Parent/Child Aggregate Data"
+ML	Dim UOME AggRef
+ML	Table MidasUOM Macro MidasUOM
+ML	&nbsp;&nbsp;Col Midas Alpha Ignore
+ML	&nbsp;&nbsp;Col UOM *, Id UOMId, UOMType Int, Desc Alpha
+ML	EndTable
+ML	{/MidasUOM()
+ML	Point UOM UOM* ;
+ML	Context Add UOM* ;               /* Add this UOM point to context for reference in children below */
+ML	Agg &lt;UOM* #MidasUOM# > ;
+ML	}/MidasUOM
+ML	Loop #MidasUOM# Bind [UOM.. #c#] AggVal(UOM* Dim:#d# #i#)
+ML	  
+ML	Table MidasUOME Macro MidasUOME
+ML	&nbsp;&nbsp;Col Midas Alpha Ignore
+ML	&nbsp;&nbsp;Col Index Int, Factor Num, Suffix Alpha, Desc Alpha
+ML	EndTable
+ML	{/MidasUOME()
+ML	Agg &lt;UOME+ #MidasUOME# UOM*> ;   /* Link parent UOM* point to this new aggregate */
+ML	}/MidasUOME
+ML	Loop #MidasUOME# Bind [UOME.. #c#] AggVal(UOME* Dim:#d# #i#)
+ML	Bind [UOME.. UOM] AggVal(UOME* Dim:UOM #i+#)
+DPT	Alpha	Alphanumeric Dimension Type	AlphaList
+Desc
+IPar	"The Alpha dimension type is used for all alpha-numeric points. Points are stored as a string of 8 or 16 bit bytes. Comparisons are based on both content and length. Upper and lower case text is supported and considered different for matching."
+Syntax
+DPTSyn	"\"" param:alphastring "\""	"where " param:alphastring " is any string of alpha-numeric characters."
+DPTSyn	"^v\"" param:v4command "\""	"where " param:v4command " is any V4 command to be immidiately interpreted."
+DPTSyn	"^p\"" param:v4point "\""	"where " param:v4point " is any V4 point specification to be immediately parsed and evaluated."
+Index	punctuation	General	Str("v4refdimtype.htm#PntType:Alpha")	^v	General
+Index	punctuation	General	Str("v4refdimtype.htm#PntType:Alpha")	^p	General
+IPar	"Alpha points may be just keywords, or enclosed in double quotes. \
+The backslash may be used to insert special characters into a string. An alpha point is \
+limited to just over 2000 characters. The " PntType:BigText " point type is better suited for long text strings although in most situations V4 will automatically determine \
+the optimum point type for a given string."
+IPar	"Alpha strings may be continued over several lines by terminating a line-to-be-continued with a single '\\' or '&'. \
+A string may be broken into any number of lines. V4 does not automatically insert any additional white-space characters \
+between continued lines."
+IPar	"If an " PntType:Alpha " dimension is declared with the " TagName:Normalize " option then all points on that dimension \
+are converted to upper case."
+IPar	"It is good practice to use double quotes to enclose V4 strings. Strings enclosed in single quotes are treated as \
+parser recognized patterns."
+IPar	"The table below lists the supported escape sequences-"
+Table	String Literal Escape Characters	0	0	#E6E6C0
+TE	"\\n" "Newline character" "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" "\\l" "Linefeed"
+TE	"\\$" "Escape" "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" "\\r" "Carriage return"
+TE	"\\b" "Bell" "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" "\\'" "Nested quote"
+TE	"\\\\" "Single backslash" "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" "\\\\" "Nested quote"
+TE	"\\<" "Backspace" "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" "\\A - \\Z" "Control characters"
+TE	"\\f" "Formfeed" "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" "\\<i>nnn</i>" "decimal equivalent"
+TE	"\\t" "Tab" "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" "\\u<i>nnnn</i>" "the four digit <a href='http://www.fileformat.info/info/unicode/char/search.htm' target=_blank>U+nnnn</a> Unicode value (hexadecimal)"
+Index	punctuation	General	Str("v4refdimtype.htm#PntType:Alpha")	\\<i>character</i>	DPT
+IPar	"V4 processes all alphanumeric strings using the 16 bit Unicode format. An " PntType:Alpha " point may be represented as either \
+an 8-bit ASCII character string or a 16-bit Unicode string. The internal representation is hidden from the user. Input files \
+to V4 may be ASCII, UTF-8, or either of the UTF-16 (big/little endian) encodings. Output from V4 is usually UTF-8 but may be \
+overridden with options within the " IntMod:Output " module."
+IPar	"The only time 8 versus 16 bits must be explicitly declared is when writing aggregates. Strings within aggregates must \
+be explicitly declared to be 8 bit (" PntType:Alpha ") or 16 bit (" PntType:Unicode ")."
+Examples
+EXWD	Alpha:keyword	converts to Alpha:"KEYWORD"
+EXWD	"\"Now is\\tthe time for all good men\""	converts to Alpha:"Now is " Param:tab " the time for all good men"
+DPT	Binary	Binary Data Dimension Type	Database
+Desc
+IPar	"Binary data points are currently only supported through V4 Table entries and are limited to a maximum of 254 bytes. Binary entries are automatically assumed to be entered as hexadecimal digits with two hex digits per byte."
+DPTSyn	Param:xxxx "..."	"where " Param:xxxx " consists of up to 254 pairs of hexadecimal digits, each pair representing an 8-bit byte."
+DPT	BigText	Large Alphanumeric Strings	AlphaList
+Desc
+IPar	"The BigText dimension type is used for incorporating large amounts of text into a V4 point. A V4 Alpha point is limited to slightly over 2000 characters. \
+The maximum length of a BigText point is about 32,000 characters."
+Syntax
+IPar	"BigText text can span multiple lines so a beginning and ending delimiter is necessary. V4 uses a psuedo-XML format \
+to describe and delimit BigText points."
+IPar	"BigText strings may also be input as simple quoted text strings."
+IPar	"The <b>explicit</b> coercion of a BigText point to a list results in a list of Dim:Alpha points corresponding to each \
+line within the BigText point."
+IPar	"If the dimension is to be used to pass JSON expressions from the web (via " Command:Context " ADV) then the <b>JSON</b> attribute should be specified. In this case V4 parses the JSON expression as part of the input processing. \
+The literal JSON expression (i.e. string) is not saved, only the internal parsed expression."
+DPTSyn	"string"	"where " Param:string " is a string literal"
+DPTSyn	"&lt;" Param:name " " Param:attributes "...>" Param:text " &lt;/" Param:name ">"	"where " Param:name " is an arbitrary name with the only restriction being that the string '&lt;/" Param:name "> does not appear in the text."
+Table	"BigText Attributes"	75	0	#E6E6C0
+TE	"NewLine" "Values are NONE, INPUT, and NL"
+TE	"Comment=\"x\"" "\"x\" is any character when appearing in the first column is considered a comment line"
+TE	"EmptyLine=keyword" "keyword is either KEEP to keep empty lines in the text, or IGNORE to ignore empty lines."
+TE	"Indent=mode" "mode is IGNORE to ignore indentation, BLANK to treat all whitespace indentation<br>as a single space, INPUT to maintain indentation, and TAB to convert all indentation<br>to a single tab."
+TE	"Javascript" "Treat the text as javascript source code and process with following rules: ignore leading spaces, ignore any text including and after '//' (comments), ignore spaces before semicolons, braces and equal signs, \
+if the last character in a line is a semicolon then join the next line with the current."
+TE	"Dimension=dim" "dim is the name of the dimension for the BigText point. The default is Dim:BigText."
+Index	NewLine	DPT	Str("v4refdimtype.htm#PntType:BigText")
+Index	Comment	DPT	Str("v4refdimtype.htm#PntType:BigText")
+Index	EmptyLine	DPT	Str("v4refdimtype.htm#PntType:BigText")
+Index	Keep	DPT	Str("v4refdimtype.htm#PntType:BigText")
+Index	Ignore	DPT	Str("v4refdimtype.htm#PntType:BigText")
+Index	Blank	DPT	Str("v4refdimtype.htm#PntType:BigText")
+Index	Indend	DPT	Str("v4refdimtype.htm#PntType:BigText")
+Index	Dimension	DPT	Str("v4refdimtype.htm#PntType:BigText")
+Index	Javascript	DPT	Str("v4refdimtype.htm#PntType:BigText")
+Examples
+EXWD	Dim BT BigText	declare a BigText dimension
+EXWD	List:=BT:"now is\rthe time for\rall good"	("now is" "the time for" "all good")
+EX	Dim HText BigText Local Attribute "bt newline=none indent=blank"
+EX	[JS:ValidateSignOnForm Code] HText:&lt;bt>
+EX	function ValidateSignOnForm(form)
+EX	{ if (form.Password.value.length == 0) { alert("Please enter password") ; return(false) ; }
+EX	&nbsp;&nbsp;if (form.UserName.value.length == 0) { alert("Please enter user name") ; return(false) ; }
+EX	&nbsp;&nbsp;return(true) ;
+EX	}
+EX	&lt;/bt>
+DPT	Calendar	General Calendar - Time Values	DateTime
+Desc
+IPar	"A Calendar point may represent either a calendar date or a specific date and time. This point type differs from the Uxxx family of \
+point types in that it is not limited to dates in the rage of 1850 through 2999. The Calendar point may specify any date \
+from -10000 through 10000. The Calendar point type also supports several calendars in addition to the Gregorian. Currently, \
+V4 supports the Gregorian, Julian, ISO, Islamic, and Hebrew calendars."
+IPar	"A Calendar point may represent a specific date or a date time. When a time is given it is converted to GMT (Greenwich \
+Mean Time). A date-time may display as more than one date depending on the time zone of entry versus the time zone of display. \
+For example the eastern standard time of 10-Mar-2003:20:00 would be stored as 11-Mar-2003:01:00 GMT."
+IPar	"The " TagName:YMDOrder " option may be given to specify the ordering of year, month, and day within a date value."
+IPar	"Calendar point types are stored as 64 bit double precision floating point. The integral portion represents the date \
+and the fractional part is the time of day (0.5 being noon GMT)."
+IPar	"The Calendar and TimeZone attributes may be given when declaring a Calendar dimension to declare the Calendar type \
+and default time zone. If the time zone is not specified then the local time zone is assumed."
+IPar	"Since calendar points are stored as <a href='http://aa.usno.navy.mil/faq/docs/UT.html' target=_blank>GMT</a> time, both a timezone and daylight-savings flag are required to convert \
+from " PntType:UDate " and " PntType:UTime " points."
+IPar	"Calendar points can resolve time to the second and the difference between two calendar points represents the fractional \
+number of days between the two points which can be converted to seconds by multiplying by (60*60*24). Note however that the \
+current implementation does not support the notion of <a href='http://tycho.usno.navy.mil/leapsec.html' target=_blank>UTC leap seconds</a> so that the determination of time differences across \
+multiple years may be off by several seconds (on the order of 0.8 seconds per year of difference)."
+Index	GMT	General	Str("v4refdimtype.htm#PntType:Calendar")
+Syntax
+DPTSyn	Param:date	"a date of the form " Param:yyyymmdd " or " Param:"mm/dd/yyyy" " or " Param:"dd-mmm-yyyy" " where " Param:yyyy " is the year, " Param:mm " is the month, and " Param:dd " is the day. Note that a four \
+digit year MUST always be specified as two digit (or negative) years are valid. The " Param:mm " portion of the date should be the \
+week number when using the ISO calendar format."
+DPTSyn	Param:datetime	"a date and time where the " Param:date " portion is as described above, followed by a colon or space and \
+then a " Param:time " of the form " Param:"hh:mm:ss zone" " where " Param:hh " is the hour (0-23), " Param:mm " is the minutes \
+(0-59) and " Param:ss " is the optional seconds (0-59). The " Param:zone " is an optional time zone specification. This \
+may be an integer in the range of -12 to +12 with 0 being UTC (GMT, Zulu) time. A (3) letter abbreviation my also be given. \
+The acceptable abbreviations are defined in the V4LanguageInfo.v4i initialization file."
+DPTSyn	"#" Param:nnnn	"where " Param:nnnn " is the internal number of days offset from the base date (1 = 1-Jan-0001)."
+DPTSyn	"{now}"	"always refers to the current date + time"
+DPTSyn	"<i>none</i>"	"Refers to <i>no date</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i."
+Examples
+EXWD	Dim Cal Calendar	Defines a Gregorian calendar in local time zone
+EXWD	Dim HCal Calendar Calendar Hebrew	Defines a Hebrew calendar in local time zone
+EXWD	Dim ICal Calendar Calendar Islamic TimeZone 3	Defines Islamic calendar in time zone 3 hours ahead of GMT
+EXWD	Dim ISO Calendar Calendar ISO	Defines an ISO calendar
+EXWD	= Cal:{now}	Returns, for instance, 2003-Mar-10:11:24:03
+EXWD	= Cal:7-Mar-2003:22:17	Returns Cal:7-Mar-2003 12:00:00
+EXWD	= Cal:"7-Mar-2003 22:17 GMT"	Returns Cal:7-Mar-2003 17:17:00 in EST time zone. (note that quotes are needed if spaces are used as delimiters)
+EXWD	= HCal:=Cal:20030101	Returns HCal:27-Tevet-5763
+EXWD	= ICal:=Cal:20030101	Returns ICal:27-Shawwal-1423
+EXWD	= ISO:=Cal:20030101	Returns ISO:2003-W01-3
+DPT	CodedRange	A Coded Range of Integer Values	Numeric
+Syntax
+IPar	"See the " PntType:Integer " dimension point type."
+Desc
+IPar	"The CodedRange point type is parsed, represented, and handled in the same way as the Integer point type. The only difference is within the " IntMod:In " module. It is used when a single number or point represents a range of points."
+IPar	"A mapping from each source point to the range of points must be made with the " IntMod:V4 " module. The mapping can be done explicitly or implicitly via a binding of the form '[UV4:CodedRange Dim:<i>dimension</i>]=<i>range-specification</i>."
+Examples
+EX	Dim ProgId Coded Multiple Range
+EX	""
+EX	"Bind [UV4:CodedRange Dim:ProgId]"
+EX	" V4(Dim:ProgId Number::200200 Range::200201..200209 Number::200220 Range::200221..200222)"
+EX	""
+EXWD	In(ProgId:200204 ProgId:200200)	returns Logical:True because ProgId:200204 is in the allowed range of ProgId:200200
+DPT	Color	Named Color Dimension	Special
+Syntax
+DPTSyn	Param:htmlcolor	"where " Param:htmlcolor " is a valid <a href='http://www.w3.org/TR/REC-html40/types.html#h-6.5' target=_blank>HTML color</a>."
+DPTSyn	"#" Param:rrggbb	"where " Param:rrggbb " is a <a href='http://www.w3.org/TR/REC-html40/types.html#h-6.5' target=_blank>24-bit</a> color specification."
+DPTSyn	"<i>none</i>"	"Refers to <i>no color</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i."
+DPTSyn	"<i>other</i>"	"A special keyword that has previously been assigned to this point type with the " IntMod:V4 "(" TagName:Name "::" Param:keyword ") module."
+Desc
+IPar	"The Color point type is used to reference standard HTML/World-Wide-Web colors. All of the standard color names are supported and mapped to their corresponding 24 bit values. V4 Color points are stored as 32 bit integers. A color point can be projected onto an integer point to determine its numeric value."
+Examples
+EX	Dim C Color
+EXWD	Sort(C.. By::Str(C* UC?) Do::EchoT(C* Format(int:=C* Mask::"xxxx")))	Outputs all colors and corresponding 24 bit value in hex format
+EXML	"Generate HTML Page Showing All Colors"
+ML	Include v4
+ML	Dim C Color
+ML	 
+ML	[Colors]
+ML	&nbsp;Do(XML::html Echo() XML::body XML::"table border='0'"
+ML	&nbsp;&nbsp;&nbsp;&nbsp;Enum(C..
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;@Do(XML::tr Echo(XML::td C*)
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Echo(XML::Str("td width='50' bgcolor='#" Format(Int:=C* Mask::"xxxxxx") "'") "")
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Echo(XML::"td" Format(Int:=C* Mask::"xxxxxx"))
+ML	&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)))
+DPT	Complex	Complex Numbers	Numeric
+DPTSyn	"(" Param:real " " Param:imag ")"	"where " Param:real " is the real number component and " Param:imag " is the imaginary component."
+Desc
+IPar	"The complex dimension type is used to represent complex numbers, i.e. numbers consisting of a real and imaginary \
+component. Complex numbers are stored as a pair of double precision real numbers."
+IPar	"A complex point can be broken into its real and imaginary parts by <b>explicitly</b> coercing it to a list."
+IPar	"V4 only supports a limited number of operations on complex numbers."
+Examples
+EX	Dim C Complex
+EXWD	Sqrt(C:(123 223))	results in C:(13.741767326399 8.11394905412201)
+EXWD	Mult(Sqrt(C:(123 223)) Sqrt(C:(123 223)))	results in C:(123 223)
+EXWD	List:=C:(123 456)	results in (Num:123 Num:456)
+DPT	Country	A Country	V4 Special
+Syntax
+DPTSyn	"#" Param:num	"A numeric country code."
+DPTSyn	Param:uncode	"A three letter UN abbreviation for the country."
+DPTSyn	"<i>none</i>"	"Refers to <i>no country</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i."
+Desc
+IPar	"This point type is used to represent all of the countries as defined by the file v4_Home:V4CountryInfo.v4i. \
+This file is loaded when V4 starts up and each row of the file corresponds to a country. The various columns in the file \
+define attributes of the country such as how telephone numbers and dates are handled. The default calendar and language of each \
+country are also defined."
+IPar	"A country point <b>explicitly</b> coerced into a list results in a list of the attributes for that country. The format \
+of the list is: (" Param:UNCountryCode " " Param:abbreviation " " Param:name " " Param:intldialcode " " Param:areacodeprefix " " Param:intlprefix " \
+" Param:domesticprefix " " Param:intltelemask " " Param:domtelemask " " Param:datemask " " Param:calendar " " Param:language " " Param:numinfo ")."
+Examples
+EXWD	Dim C Country	Defines a country dimension (Dim:UCountry is defined within v4_Home:v4kernel.v4i)
+EXWD	List:=C:USA	(Int:840 "USA" "United States of America" Int:1 Int:11 Int:1 "+c-aaa-nnn-nnnn" "(aaa)nnn-nnnn" "0d-mmm-0y" Int:0 Int:0 "$,.")
+EXWD	Enum(C.. @EchoT(List(List:=C* Nth::Int*)/Num(1 to::ListSize(List:=C*))))	Lists all attributes of all countries
+EXWD	Enum(C.. @EchoT(Int:=C* C* List(List:=C* Nth::3)))	Lists the numeric code, abbreviation, and full name of all countries."
+DPT	DataEL	Data Element Dimension Type	Database
+Desc
+IPar	"This datatype is used to describe fields within data records. Points on this dimension are made of the various components described in the table below. If a data record has repeating substructures then points of this dimension are used with points on a StrucEl dimension to completely map a data element to an offset within a record. In most cases these points are automatically created by an external database system or language compiler."
+Syntax
+DPTSyn	"(" Param:fileref "," Param:element ","  Param:v3datatype "," Param:keynum "," Param:owner "," Param:offset "," Param:bytes "," Param:decimals ")"	"where " Param:fileref " is the file reference number," Param:element " is the element number for this field," Param:v3datatype " is the V3 datatype code, " Param:keynum " is the key number if field is a key, " Param:owner " is the structure id owning this field, " Param:offset " is the offset within the owner structure, " Param:bytes " is the number of bytes for this field, " Param:decimals " is the number of decimal places implied in this field."
+Examples
+IPar	"The V3 structure shown below generates the macro calls immediately following."
+EXML	"V3 Structure to V4 Macros"
+ML	dcl struct def__Test=5601,Field,"Application=MIDAS" {
+ML	int&lt;dt__ref,key1> TestRef "This is keyed ref for the record" ;
+ML	alpha 20&lt;dt__alpha> AlphaData ;
+ML	struct Sub[20] {
+ML	    int&lt;dt__integer> Sub1,Sub2,Sub3 ;
+ML	   } ;
+ML	  bitmap 1024&lt;dt__bitmap> TestMap "Bitmap of entries found" ;
+ML	 } ;
+ML	""
+ML	"STRUCT( 5601, DEF__TEST )"
+ML	"FLD( TESTREF, 5601,1,DT__REF,1,1,1,0,4,0, \"This is keyed ref for the record\")"
+ML	"FLDK( 5601, 1, 1, TESTREF)"
+ML	"FLD( ALPHADATA, 5601,2,DT__ALPHA,3,0,1,4,20,0, "")"
+ML	"FLD( SUB1, 5601,3,DT__INTEGER,1,0,2,0,4,0, \"\")"
+ML	"FLD( SUB2, 5601,4,DT__INTEGER,1,0,2,4,4,0, \"\")"
+ML	"FLD( SUB3, 5601,5,DT__INTEGER,1,0,2,8,4,0, \"\")"
+ML	"FLD( SUB, 5601,6,STRUCT1,3,0,1,24,240,0, \"\")"
+ML	"FLDS( 5601,2,6,12,20,"",24)"
+ML	"FLD( TESTMAP, 5601,7,DT__BITMAP,3,0,1,264,132,0, \"Bitmap of entries found\")"
+ML	"FLD( DEF__TEST, 5601,8,STRUCT0,3,0,0,0,396,0, \"\")"
+ML	"FLDS( 5601,1,8,396,0,\"\",0)"
+IPar	"A macro definition such as this one following can be used to interpret the compiler output."
+EXML	"V4 Macro to Define V3 Structure"
+ML	"{/FLD( aField, aFileRef, aSeq, aObject, aV3DT, aKNum, aOwner, aBytes, aOffset, aDecimals, aComments )"
+ML	". . ."
+ML	"Bind [DataEL Field:aField] DataEL:( aFileRef, aV3DT, aKNum, aOwner, aOffset, aBytes, aDecimals) ;"
+ML	"... "
+ML	"}/FLD"
+DPT	DateTime	Date + Time Dimension Type	DateTime
+IPar	"Points on dimensions of this type incorporate a date and a time component with a resolution of one second. \
+Internally, date-times are represented as the number of seconds since Jan 1, 1980. The " IntMod:DTInfo " module can \
+be used to extract the date and time components out of a point."
+IPar	"The " TagName:YMDOrder " option may be given to specify the ordering of year, month, and day within a date value."
+Syntax
+DPTSyn	"[<i>yy</i>]<i>yymmdd</i>[:<i>hh:mm</i>[:<i>ss</i>]]"	"where " Param:yyyy " is the year, " Param:mm " is the month, " Param:dd " is the day, " Param:hh " is the hour, " Param:mm " is the minute, and " Param:ss " is the second. \
+(Note: see the YMDOrder attribute)"
+DPTSyn	"[<i>yy</i>]<i>yymmdd</i>[:<i>hh:mm</i>[:<i>ss</i>]]"	"alternate"
+DPTSyn	"<i>mm/dd/</i>[<i>yy</i>]<i>yy</i>[:<i>hh:mm</i>[:<i>ss</i>]]"	"alternate"
+DPTSyn	Param:relday ":<i>hh:mm</i>[:<i>ss</i>]]"	"where " Param:relday " is 'Yesterday', 'Today', or 'Tomorrow'. (See \
+v4_home:V4LanguageInfo.v4i for language specific values.)"
+DPTSyn	Param:relday	"where " Param:relday " is 'Yesterday', 'Today', or 'Tomorrow'. This specification corresponds to \
+the 24 hour period, not a specific date-time."
+DPTSyn	"Now"	"refers to the current date and time."
+DPTSyn	"+" Param:num "Hours"	"refers to a date-time that is " Param:num " hours from current. (See \
+v4_home:V4LanguageInfo.v4i for language specific values.)"
+DPTSyn	"+" Param:num "Minutes"	"refers to a date-time that is " Param:num " minutes from current."
+DPTSyn	"+" Param:num "Seconds"	"refers to a date-time that is " Param:num " seconds from current."
+DPTSyn	"-" Param:num "Hours"	"refers to a date-time that is " Param:num " hours before current. (See \
+v4_home:V4LanguageInfo.v4i for language specific values.)"
+DPTSyn	"-" Param:num "Minutes"	"refers to a date-time that is " Param:num " minutes before current."
+DPTSyn	"-" Param:num "Seconds"	"refers to a date-time that is " Param:num " seconds before current."
+DPTSyn	"#" Param:num	"where " Param:num " is an integer number of seconds from 1-Jan-1980."
+DPTSyn	"<i>none</i>"	"Refers to <i>no date-time</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i."
+DPTSyn	"<i>other</i>"	"A special keyword that has previously been assigned to this point type with the " IntMod:V4 "(" TagName:Name "::" Param:keyword ") module."
+DPTSyn	"{now}"	"always refers to the current date-time. Unlike all date-times above, this reference is dynamic and is \
+calculated as the current date-time whenever referenced. All other specifications are static and determined when parsed."
+Desc
+IPar	"A DateTime point represents a particular date and time. Unlike the " PntType:Calendar " point, datetime points \
+are by definition local time. If it is necessary to represent true world time then use the " PntType:Calendar " point type."
+IPar	"DateTime points span a limited period of time- from January 1, 1980 through December 31, 2047."
+Examples
+EXWD	Dim UDT DateTime	declare a date-time dimension
+EXWD	UDT:951205:11:23:01	represents 5-Dec-1995 11:23:01
+EXWD	UDT:#502629781	equivalent representation
+EXWD	UDT:20010101	represents midnight 1-January-2001
+DPT	Delta	A Delta Integer Value	Numeric
+IPar	"Delta values are integers indicating a plus/minus offset, not a specific value."
+Syntax
+DPTSyn	"[+][-]num"	"Where num is an integer number prefaced by either a plus or minus."
+Desc
+IPar	"Delta values must be prefaced with either a plus or minus sign."
+Examples
+EX	Dim Delta Delta
+EXWD	Bind [NextYear UDate..] DTInfo(UDate* Year::D:+1)	returns the date plus 1 year
+DPT	Dictionary	Dictionary Entry Dimension Type	V4 AlphaList
+Desc
+IPar	"V4 supports an internal dictionary that maps keywords to internal numeric values. This is used to both cut down on storage requirements and to speed up matching (matching two integer values is much faster and easier than testing two string values). The default NId dimension is of type Dictionary, as well as the Dim dimension (the dimension of all dimensions!)."
+IPar	"The user has no control over the mapping of particular keywords to particular integer values and there is no guarentee that the mapping will remain constant over repeated 'compilations' of V4 bindings. If long term data is to be stored as dictionary entries then the " PntType:External " dimension type should be used."
+Syntax
+IPar	"All points of this type are specified as keywords, converted to upper case. Numerics are also allowed as well as strings of numbers and alpha (e.g. 32BIT)."
+Examples
+EX	"[V4Type Dim:Alpha]"
+DPT	External	An External Dictionary Entry	V4 AlphaList
+Desc
+IPar	"This point type is similar to the " PntType:Dictionary " point type in that it maps a character keyword to a 32 bit integer number. However External dictionary entries are stored in an explicitly declared external dictionary area. Points may only be created on an external dimension if the area associated with the dictionary has been opened with update access."
+IPar	"V4 maintains the mapping from dimension to dictionary entry for all external dimensions. The " Param:dim ".. construct may be used to reference all points on an external dimension."
+IPar	"External dictionary entries are normally case insensitive. Use the " Command:Dimension " CaseSensitive option for case sensitive entires."
+Syntax
+DPTSyn	Param:name	"where " Param:name " is the external dictionary name. Any letters or digits may be used."
+DPTSyn	"#" Param:num	"where " Param:num " is the internal number for an entry (an integer greater than 0)."
+DPTSyn	"#" Param:hash	"where " Param:hash " is any text string to be forced to an entry. These values are not saved in \
+the dictionary and may only be used locally."
+IPar	"See also the " PntType:Dictionary " point type."
+Examples
+EXWD	Enum(State.. @EchoT(State*))	Outputs a list of all entries in the External dimension State.
+DPT	Fixed	A Fixed Decimal 64bit Number	Numeric
+Desc
+IPar	"Fixed decimal numbers offer up to 19 significant digits with up to 8 decimal places. It is primarily intended for monetary values. Note that the 'Decimals' option must be given when declaring a dimension of type Fixed."
+Syntax
+IPar	"The syntax of a fixed number is simply " Param:nnnn "." Param:decimals "."
+Examples
+EX	Dim Money Fixed Decimals 2
+EX	Bind [Sales Cus:123] Money:10024.55
+DPt	GeoCoordinate	Latitude/Longitude/Altitude	Special
+Syntax
+DPTSyn	"(" Param:lat " " Param:long " [" Param:alt " [" Param:tz "]])"	Param:alt " and " Param:long " are latitude and longitude. " Param:alt " is \
+an optional altitude in meters, and " Param:tz " is an optional time zone."
+DPTSyn	"(" Param:tag ":" Param:value "...)"	"The alternate format for specifying a geocoordinate consists of a series of tagged values enclosed \
+within parentheses. The valid tags follow below-"
+DPTSyn	"Lat:" Param:latitude	"The latitude specified as a positive (north) or negative (south) number degrees. A suffix of 'N' or 'S' may be used \
+instead of a leading sign. Degrees/minutes/seconds may be specified as " Param:degrees ":" Param:minutes ":" Param:seconds "."
+DPTSyn	"Lon:" Param:longitude	"The longitude specified as a positive (east) or negative (west) number degrees. A suffix of 'E' or 'W' may be used \
+instead of a leading sign. Degrees/minutes/seconds may be specified as " Param:degrees ":" Param:minutes ":" Param:seconds "."
+DPTsyn	"Alt:" Param:heightuom	"The altitude given (" Param:height ") given in the chosen units (" Param:uom "), one of M (meters), KM (kilometers), \
+MI or MILES (miles), FT or FEET (feet), YD or YARDS (yards), NM or NMI (nautical miles). The height specification can be negative indicating below sea level."
+DPTSyn	"TZ:" Param:timezone	"The timezone specified as an integer value between -12 and +12 or a valid timezone abbreviation (e.g. EST)."
+DPTSyn	"Dst:" Param:distance	"A distance specification. This is in the same format as the <b>Alt</b> tag."
+DPTsyn	"Spd:" Param:speeduom	"A speed specification. This consists of a " Param:speed " and a unit-of-measure suffix (" Param:uom ")- one of \
+MPH (miles per hour), KMH (kilometers per hour), KNOTS (knots), FPS (feet per second), MPS (meters per second)."
+DPTSyn	"DT:" Param:datetime	"A date time that is a valid " PntType:Calendar " point value."
+DPTSyn	"Az:" Param:azimuth	"The azimuth bearing given as a number between -180 and +180 degrees."
+DPTSyn	"El:" Param:elevation	"The elevation bearing given as a number between -90 and +90 degrees."
+DPTSyn	"<i>none</i>"	"Refers to <i>no geocoordinate</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i."
+DPTSyn	"<i>other</i>"	"A special keyword that has previously been assigned to this point type with the " IntMod:V4 "(" TagName:Name "::" Param:keyword ") module."
+Desc
+IPar	"A geocoordinate point represents a point in space. In its simple form it simply locates a point in a space around the earth. In its more \
+complex (tagged) form, it can not only represent the position of an object but that object's speed, velocity (speed + direction) at a given point in time."
+IPar	"The " IntMod:Geo " module performs manipulations and calculations on these points. The " IntMod:MakeP " module can be used to construct " PntType:GeoCoordinate " \
+values programatically. Projecting a " PntType:GeoCoordinate " point into a list returns that point's component values."
+IPar	"The <b>Dst</b> and <b>Spd</b> tags cannot be both used within a given geocoordinate value."
+IPar	"All of the tags and units-of-measure for these points are defined v4_home:V4LanguageInfo.v4i."
+Examples
+EXWD	Dim G Geo	declare dimension G
+EXWD	G:(35:20N 120:45W 1000 -5)	35 degress 20 minutes north, 120 degrees 45 minutes west, 1000 meters elevation, -5 hours from GMT"
+EXWD	G:(35.333 -120.75 1000 -5)	more or less identical to above
+EXWD	Geo(G:(35:17:29N 120:39:17W) G:(46:36:03N 112:02:33W))	return the distance between the two coordinates
+EXWD	List:=G:(35 20.0N 120 45.0W 1000 -5)	(Int:0 Num:35.333333 Num:-120.75 Int:1000 Int:-5)
+EXWD	List:=G:(Lat:40.2723 Lon:75:45:12W DT:18-Jul-2006 Alt:1000yd Spd:18knots Az:34.443)	(Int:1 Num:40.2723 Num:-75.753333 Num:914.4 Int:0 Num:18 Int:5 Int:3 Int:4 Num:34.443 Num:999 UCal:18-Jul-2006)
+DPT	IMArg	Reference to Prior Module Argument	V4
+Desc
+IPar	"This special point type is used to refer back to prior arguments within an internal module call. It is implemented solely for runtime efficiency."
+Syntax
+Ipar	Param:argnum " where " Param:argnum " references a prior argument."
+Examples
+EX	Dim Arg IMArg
+EXWD	[Example] GE([ComplexEvaluation] 0 Arg:1 -1)	"Evaluates [ComplexEvaluation] and compares it to 0. If the result is greater than or equal to 0 then the first argument (Arg:1), or the result of the evaluation is returned, otherwise -1 is returned."
+IPar	"Care must be taken not to use this construct as a nested argument. It is only valid for the module level it is within. The following example will not work as expected."
+EX	[BadExample] GE([ComplexEvaluation] 0 Minus(Arg:1) -1)
+DPT	Int2	Two 32bit Integer Dimension Type	Numeric
+Desc
+IPar	"The Int2 dimension type is used to map 2 32bit integers into a single point. The primary use of this point type is for creating very large number of bindings where each point is unique and a mapping into 32 bits is not sufficient."
+IPar	"The " IntMod:MakeP " module may be used to construct Int2 points."
+IPar	"If an Int2 dimension is declared with the " TagName:Normalize " option then V4 ensures that the first 32bit integer is always the lesser of the two."
+IPar	"The <b>explicit</b> coercion of an Int2 point to a list results in a 2 point list consisting of the first integer and the second integer. The " IntMod:List " module with the " Tag:Nth " tag can be used to extract the either of the two components of an Int2 point."
+IPar	"See also the Packx() modules (e.g. " IntMod:Pack1616 ") for alternative solutions to this problem."
+Syntax
+DPTSyn	"<" Param:integer1 " " Param:integer2 ">"	"where " Param:integer1 " and " Param:integer2 " are integer numbers."
+DPTSyn	"<i>other</i>"	"A special keyword that has previously been assigned to this point type with the " IntMod:V4 "(" TagName:Name "::" Param:keyword ") module."
+Examples
+EX	"Dim Int2 Int2 Bind 5"
+EX	"Bind [Int2:&lt; CUS* UMonth* > Sales] Int:1234546"
+EXWD	MakeP(Dim:Int2 123 456)	results in Int2:&lt;123 456>
+EXWD	List(List:=Int2:&lt;123 456> Nth::2)	results in second part of the Int2 point- Int:456
+EX	"Dim I2 Int2 Normalize"
+EXWD	I2:&lt;23444 123>	is converted to I2:&lt;123 23444>
+EXWD	MakeP(Dim:I2 456 123)	results in I2:&lt;123 456>
+DPT	Integer	32bit Integer Dimension Type	Numeric
+Desc
+IPar	"Points of this type are standard 32 bit signed integer values."
+Syntax
+Ipar	"The standard syntax for integers is used. Alternative radix entry can be achieved by prefacing the number with \"^B\" for binary \
+numbers, \"^X\" for hexadecimal numbers, \"^O\" for octal, and \"N\" for bits."
+IPar	"See the V4 section on <a href='v4refconcepts.htm#Section_None'>None Values</a> for the handling of " PntType:Integer " <i>none</i> values."
+Examples
+IPar	"All of the following examples refer to the same integer."
+EXWD	Int:10	Ten as a decimal number
+EXWD	Int:^b1010	Specified as a binary digit
+EXWD	Int:^o12	Ten in octal
+EXWD	Int:^xA	Hexadecimal reprensentation of 10
+EXWD	Int:^N(4,2)	Ten specified as bits 4 and 2
+Index	punctuation	General	Str("v4refdimtype.htm#PntType:Integer")	^b	General
+Index	punctuation	General	Str("v4refdimtype.htm#PntType:Integer")	^o	General
+Index	punctuation	General	Str("v4refdimtype.htm#PntType:Integer")	^x	General
+Index	punctuation	General	Str("v4refdimtype.htm#PntType:Integer")	^N	General
+Index	radix	General	Str("v4refdimtype.htm#PntType:Integer")	binary	General
+Index	radix	General	Str("v4refdimtype.htm#PntType:Integer")	octal	General
+Index	radix	General	Str("v4refdimtype.htm#PntType:Integer")	hexadecimal	General
+Index	radix	General	Str("v4refdimtype.htm#PntType:Integer")	bits	General
+DPT	Intersection	A V4 Intersection	V4
+Desc
+IPar	"Intersections are V4 points just like everything else in the V4 model."
+Syntax
+IPar	"An intersection is denoted as a left bracket followed by one or more points, no two of the same dimension, and terminated with a right bracket."
+DPT	IntMod	Internal Module	V4
+Desc
+IPar	"IntMods are calls to V4's internal modules."
+DptSyn	Param:name "([" Param:arglist "])"	"where " Param:name " is the name of the module and " Param:arglist " is an optional list of argument points."
+DPT	List	List of Points Dimension Type	AlphaList
+DptSyn	"([" Param:point "...])"	"a list consists of 0 or more points inclosed within parentheses."
+Desc
+IPar	"List points are simply lists of other points (including lists). V4 has many facilities for operating on lists \
+and converting from points to lists."
+IPAR	"A V4 list may contain points of any type but, by default, intersections and V4 modules may not be included in lists \
+without giving the <b>Intersection</b> attribute when the list is declared. This is a security feature to prevent potentially dangerous 'code' \
+from being injected into V4 from web applications."
+Index	Intersection	DPT	Str("v4refdimtype.htm#PntType:List")
+IPar	"V4 implements lists in a variety of ways depending on how the list is created and what it contains. Some lists are \
+<i>lazy</i> in that the points on the list are not predefined, but determined as they are accessed. For instance, a list may \
+consist of points determined by evaluating an intersection."
+IPar	"Inserting a list into the context does just that- inserts the list as a single dimension point. If all the points within a list are to be inserted then \
+the list may be prefaced with a back-quote. This forces the V4 runtime to insert each element of the list into the context, each as a separate point."
+IPar	"If a list dimension is declared with the DotIndex attribute then entries within those list points may be easily \
+accessed with the syntax- " Param:list "." Param:point " which is converted by the V4 compiler to " IntMod:List "(" Param:list "* Nth::" Param:point ")."
+IPar	"One particularly efficient method of implementing a list is the bitmap. Bitmaps work well when all the elements of a \
+list are points on the same dimension, and the total number of points on that dimension are known in advance. The user \
+may force V4 to implement lists by associating an <b>Entries</b> <i>dimension</i> attribute when the list dimension is \
+declared. All lists on the dimension will be implemented as bitmaps. Use of the " IntMod:Tally " " TagName:ListOf " option \
+will create bitmaps if the list dimension is also specified. Non-bitmap lists may be converted to bitmaps by projecting \
+one list onto the target (bitmap) list dimension."
+IPar	"The coercion of other V4 point types into a list results in a breakdown of that point into its component parts. \
+For example coercing a " PntType:UDate " point into a list results in a 3-tuple consisting of the year, month, and day of \
+that date. The table below describes the various mappings into a list."
+Table	Point to List Coercions	0	0	#E6E6C0
+TE	"Int2"	"(firstnumber secondnumber)"
+TE	"Complex" "(real imaginary)"
+TE	"BigText" "a list of Alpha points corresponding to each line within the point."
+TE	"GeoCoord" "(0 latitude longitude altitude timezone)"
+TE	"GeoCoord" "(1 latitude longitude altitude timezone distance distuom speeduom heightuom azimuth elevation datetime)"
+TE	"UPeriod" "(year period)"
+TE	"UMonth" "(year month)"
+TE	"UQuarter" "(year quarter)"
+TE	"UWeek" "(year week)"
+TE	"UDate" "(year month day)"
+TE	"DateTime" "(year month day hour minute second)"
+TE	"Calendar" "(year month day hour minute second)"
+TE	"Calendar" "(year month day) - if no time specified"
+TE	"UTime" "(hour minute second fractionalsecond)"
+TE	"XDB" "(xdbId recId)"
+TE	"Country" "(uncode abbreviation fullname internaldialcode domesticcode<br>internationalcode internationaltelephonemask domestictelephonemask<br> datemask calendarcode languagecode numericmask)"
+TE	"Telephone" "(internationaldialcode areacode number)"
+Examples
+EX	(now is the time)
+EX	(This is a mixed list (1 2 3 Dim:Alpha) )
+DPT	Logical	Logical Value Dimension Type	Numeric
+Desc
+IPar	"Points of the logical type are stored internally as 32 bit integers. A logical True is stored as 1, while a logical False is stored as 0. V4 will automatically convert any numerical point greater than zero to a True and any number less than or equal to 0 as False."
+Syntax
+DptSyn	Param:logical	"where logical is one of: TRUE, FALSE, YES, or NO."
+Examples
+EX	Logical:Yes or Logical:True
+EX	Logical:No or Logical:False
+EX	Logical:1 or Logical:0
+EX	TRUE ("TRUE" in all uppercase is recognized as Logical:True)
+EX	FALSE ("FALSE" in all uppercase is recognized as Logical:False)
+Index	TRUE	General	Str("v4refdimtype.htm#PntType:Logical")
+Index	FALSE	General	Str("v4refdimtype.htm#PntType:Logical")
+DPT	XDB	An External Database Connection/Query Point	Database
+Desc
+IPar	"XDB points are created by V4 to represent various connections and query states to external (e.g. relational) databases. XDB points cannot be explicitly referenced."
+Syntax
+DPTSyn	Param:none	"Refers to <i>no XDB point</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i."
+IPar	"XDB points are created solely via the " IntMod:dbConnect " internal module."
+Examples
+EXWD	Dim pXDB	create XDB dimension
+EXWD	[SQLXct DataSet.. SQLCmd..]	evaluation connects to SQL database and executes specified SQL command
+EX	"   Do(dbConnect(Dim:pXDB DSN::DataSet*) Value::dbXct(SQL::SQLCmd*) dbFree())"
+DPT	PointReference	Reference to a Static V4 Point	V4
+Desc
+IPar	"A " PntType:PointReference " dimension contains points that reference a static V4 point. V4 is a functional, \
+call-by-value type language and as such it is difficult to perform repeated operations on what would be considered a <i>\
+variable</i> is any other language. In some situations this ability is desirable, especially for performance reasons. \
+Therefore V4 provides limited support for variables with this point-type. Needless to say, this capability should be used \
+sparingly as it defeats the functional/call-by-value nature of V4."
+IPar	"The " IntMod:PRUpd " module may be used to update a " PntType:PointReference " point. Other modules implicitly \
+update points. These include the " IntMod:Str " module when the first argument is a point reference (see example below) and \
+the " IntMod:List " module when appending to a list."
+DPTSyn	Param:none	"Points of this type reference other point types. " PntType:PointReference " points are created \
+with the IntMod:MakeP module."
+IPar	"Points of this type may be inserted into the context or bound to an intersection. When binding as a value \
+make sure to evaluate the " IntMod:MakeP " module or you will get unexpected results (see example below)."
+Examples
+EXWD	Dim X PointReference	Declare a PointReference dimension
+EXWD	Context Add MakeP(Dim:X "Now is the time for all")	Create a point on the X dimension and add to the context
+EXWD	Str(X* Replace::" " Num? With::".")	Returns "Now.is.the.time.for.all"
+EXWD	Str(X*)	Returns "Now.is.the.time.for.all" (Note that the Str() module actually updates the value of the X point.
+EXWD	Context Add MakeP(Dim:X 0)	Makes another point reference set to Int:0
+EXWD	Enum(Int:1..100 @PRUpd(X* {X* + Int*}))	Adds all the integers from 1 to 100 into X*
+EXWD	X*	Is a point reference to Int:5050
+EXWD	Bind [Foo] MakeP(Dim:X 0)	Binds [Foo] to MakeP(Dim:X 0)- each evaluation of [Foo] results in the evaluation of MakeP returning a new point reference.
+EXWD	EBind [Foo] MakeP(Dim:X 0)	Binds [Foo] to the evaluation of the MakeP. Later evaluations of [Foo] all return the same point reference!
+DPT	Real	64bit Floating Point Dimension Type	Numeric
+Desc
+IPar	"Floating point points are declared with the Real dimension type. The <b>Decimal</b> " Param:num " option may be given \
+when declaring a floating point dimension. This will fix the display of points on that dimension to " Param:num " decimal \
+places, not the actual precision of the point."
+IPar	"Care must be taken when comparing two floating point numbers, especially for equality. V4 uses the \
+<a href='http://grouper.ieee.org/groups/754/reading.html' target=_blank>IEEE floating point format</a>. Not all decimal numbers can \
+be exactly represented in this format. Two floating point numbers may appear to be equal \
+but may actually differ after many displayed (or not displayed) decimal places."
+IPar	"See the V4 section on <a href='v4refconcepts.htm#Section_None'>None Values</a> for the handling of " PntType:Real " <i>none</i> values."
+IPar	"The " IntMod:V4 " " TagName:Epsilon " parameter may be set to force V4 into changing the way it compares floating \
+point values. If the " Param:Epsilon " value is set to a non-zero number then any two floating point numbers that differ by \
+less than that value will be considered equal. The default value for " Param:Epsilon " is zero. The examples below demonstrate \
+how " Param:Epsilon " is used."
+IPar	"The " IntMod:V4 " " TagName:Epsilon " parameter may be a list. In this case the first numeric value is the comparison value as explained above. The second numeric value is used whenever a\
+real number is calculated. If set then any real result with an absolute value less than the second value will be set to 0."
+Index	Epsilon	Tag	Str("v4refdimtype.htm#PntType:Real")
+Index	floating-point	General	Str("v4refdimtype.htm#PntType:Real")
+Table	Floating Point Comparisons	0	0	#E6E6C0
+TE	"Eq(), EqK() and In()" "AbsValue(<i>num1</i> - <i>num2</i>) <= <i>epsilon</i>"
+TE	"NE()" "AbsValue(<i>num1</i> - <i>num2</i>) > <i>epsilon</i>"
+TE	"GE()" "<i>num1</i> + <i>epsilon</i> >= <i>num2</i>"
+TE	"GT()" "<i>num1</i> - <i>epsilon</i> > <i>num2</i>"
+TE	"LE()" "<i>num1</i> - <i>epsilon</i> <= <i>num2</i>"
+TE	"LT()" "<i>num1</i> + <i>epsilon</i> < <i>num2</i>"
+TE	"LEG()" "0 if Eq(<i>num1</i> <i>num2</i>) else -1 if <i>num1</i> < <i>num2</i> else +1"
+DptSyn	Param:num "[." Param:dec "][E" Param:exp "]"	"where " Param:num "." Param:dec " is a floating point number followed by an optional 'E' and an positive or negative exponent of " Param:exp "."
+DPTSyn	"<i>other</i>"	"A special keyword that has previously been assigned to this point type with the " IntMod:V4 "(" TagName:Name "::" Param:keyword ") module."
+Examples
+EX	"Real:100.23"
+EX	"Real:0.6543E10"
+EXWD	{123.5 = (123.111 + 0.389)}	false - due to inability to exactly represent decimal values
+EXWD	V4(Epsilon::0.0000001)	set the floating point comparison epsilon to a non zero value
+EXWD	{123.5 = (123.111 + 0.389)}	true - the two points are considered as equal (within epsilon)
+EXWD	{99.0 - 98.9999}	returns 0.00010000000000332
+EXWD	V4(Epsilon::(0 0.001))	set the two limits
+EXWD	{99.0 - 98.9999}	now returns 0 because the result is less than 0.001
+DPT	RegularExpression	A Regular Expression String	AlphaList Special
+Syntax
+IPar	"see links below"
+Desc
+IPar	"A RegularExpression point is similar to a point on the Alpha dimension. When a point is defined it is parsed as a regular expression and stored in an internal format. Regular expression points can be used in several modules including " IntMod:Str "."
+IPar	"Many excellent descriptions of regular expressions are available on the web. Try <a href='http://en.wikipedia.org/wiki/Regular_expression' target=_blank>Wikipedia: Regular Expressions</a> or \
+<a href='http://www.regular-expressions.info/' target=_blank>Regular-Expressions.info</a> for an overview of regular expressions."
+IPar	"Note that a regular expression normally attempts to match the <b>longest</b> pattern. This may be overridden by specifying a question mark ('?') after an asterisk \
+('*') or plus sign ('+'). See the examples below."
+Examples
+EXWD	RegExp:"^abc(.*)def"	a pattern matching begin-of-string (^), "abc", any number of characters, then "def"
+EXWD	Context Add "&lt;input type='text'>Some random text&lt;input type='checkbox'>"	Add Alpha pont to context
+EXWD	Str(Alpha* RegExp::"&lt;(.*)>" Group::1)	returns "input type='text'>Some random text&lt;input type='checkbox'"
+EXWD	Str(Alpha* RegExp::"&lt;(.*?)>" Group::1)	returns "input type='text"
+DPT	Shell	Dummy "Shell" Dimension Type	V4
+Syntax
+DptSyn	Param:point	"the value of a Shell point is any other V4 point."
+Desc
+IPar	"Shell dimensions do not have any particular format or syntax. Points of this type have values of other points. Hence a shell point \
+is simply a dimension wrapped around a point of some other dimension. Shell points are used by many of the internal modules to denote a \
+special action or operand."
+IPar	"Shell points can be inserted into the context and can be used as a common dimension for 'passing' a variety of points into a single \
+intersection. The evaluation of " Param:shellpoint "* returns the current value of that shell point. If that is an intersection, or special \
+V4 value (such as " Param:dim "* or " Param:dim ":{now}") then that becomes the value. Nested evaluation does not automatically occur. If you wish \
+to reference the evaluated result, then preface the shell reference with the force-evaluation (`) operator."
+Examples
+EXWD	Context Add Shell1:UDate:5/1/07	Add to context
+EXWD	Context Add Shell2:UDate:{now}	and again add to context
+EXWD	Shell1*	returns UDate:5/1/07
+EXWD	Shell2*	returns UDate:{now}
+EXWD	`Shell2*	returns UDate:7/1/07 (or whatever the current date is)
+EXWD	Dim Anything Shell	Declare the Shell dimension
+EXWD	Anything:1	(Anything:Int:1)
+EXWD	Anything:Sales	(Anything:Nid:Sales)
+EXWD	Anything:"The Title"	(Anything:Alpha:"The Title")
+DPT	SSVal	Special Spreadsheet Values	V4 Database Special
+Desc
+IPar	"The SSVal dimension contains points that have special meaning or display properties on spreadsheets."
+Syntax
+IPar	"Currently there are only eight valid points on this dimension. The are-"
+Table	SSVal Points - Allowed Values	0	0	#E6E6C0
+TE	"Div0" "Cell displays a division by zero error."
+TE	"Empty" "Appears as a blank cell on a spreadsheet"
+TE	"NA" "Cell displays as 'not applicable'"
+TE	"Name" "Cell displays a name-error value."
+TE	"Null" "Cell displays a null value"
+TE	"Num" "Cell displays a number error."
+TE	"Ref" "Cell displays a reference error"
+TE	"Value" "Cell displays a value error."
+DPT	StructEl	Structure Element Dimension Type	Database
+Desc
+IPar	"Structure element points are points that describe a data structure. In most cases they are automatically generated by a database system or a language compiler. See DataEl point types."
+Syntax
+DptSyn	"(" Param:fileref "," Param:structnum "," Param:element "," Param:bytes "," Param:occurs "," Param:countfield "," Param:offset ")"	" where " Param:fileref " is the file reference number, " Param:structnum " is a unique structure number," Param:element " is a unique element number, " Param:bytes " is the total number of bytes in one occurrence of this structure, " Param:occurs " is the total number of times this structure occurs in parent," Param:countfield " is a reference to a count field (if one exists), and " Param:offset " is the starting offset in the parent structure."
+Examples
+IPar	"See the " PntType:DataEL " dimension type for more description and examples."
+DPT	TagVal	Tagged Argument Value	V4
+Desc
+IPar	"V4 provides a the Tag dimension which is of type TagVal. All tagged argument points are points on this dimension. Tagged argument points can be created with the " IntMod:MakeP " module."
+Syntax
+Dptsyn	Param:name "::" Param:point	"where " Param:name " is a valid tag name and " Param:point " is the value point associated with the tag."
+Examples
+EXWD	Sort(Tag.. By::Alpha* Do::EchoT(Alpha*))	lists all tags. Note that the points resulting from 'Tag..' are alpha tag names.
+EXWD	MakeP(Tag:Pairs Logical:True)	results in Pairs::Logical:True
+DPT	Time	Time Dimension Type	DateTime
+Desc
+IPar	"Points of type Time differ from all other points in V4 in that an exact match is not required in an evaluation. \
+A time point matches any other time point greater or equal to it with the closest point being the \"best\". \
+For example if a binding was created with a time point of \"100\" and it is now time \"150\", the match would be made. \
+However if the current time was \"95\" then a match would not be permitted (the point at \"100\" would be in the \
+future relative to time \"95\")."
+IPar	"Note that time dimensions should not be assigned a Bind value when declared."
+Syntax
+DptSyn	Param:nnnn	"where " Param:nnnn " is an integer number."
+DPTSyn	"<i>none</i>"	"Refers to <i>no time</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i."
+Examples
+EX	Dim T Time
+EX	Bind [Value T:100] "Value at 100"
+EX	Bind [Value T:200] "Value at 200"
+EX	Bind [Value T:300] "Value at 300"
+EXWD	= [Value T:400]	results in "Value at 300"
+EXWD	= [Value T:124]	results in "Value at 100"
+EXWD	= [Value T:90]	fails
+DPT	TelephoneNumber	An International Standard Telephone Number (or Other Electronic Address)	Special
+Desc
+IPar	"This dimension type is used to primarily represent telephone numbers. V4 supports numbers consisting of a country code, \
+a city or area code and a number. The country code and area code is optional. If no country code is specified then the \
+country code for the current country (see the " IntMod:Locale " module) is used."
+IPar	"The " IntMod:MakeP " module can be used to construct telephone number points."
+IPar	"The <b>explicit</b> coercion of a telephone point to a list results in a list containing the componend parts of the telephone \
+number- (" Param:countrycode " " Param:areacode " " Param:number "). The " IntMod:List " module and " Tag:Nth " argument option may be used to extract components of the number."
+IPar	"This dimension type may also be used to represent other forms of electronic addressing such as email addresses \
+or instant messaging addresses. When a non-standard <i>phone number</i> is encountered a special acceptor is attempted. \
+V4 creates and evaluates a binding of the form [UV4:AcceptorTele " Param:alphastring "] where " Param:alphastring " is a point on Dim:Alpha \
+representing the address. The result must be a point of type " PntType:Integer " or " PntType:Integer2 ". If an integer \
+is returned then the value is stored as the " Param:number " portion of the point. If an integer2 point is returned then \
+the first half is stored as the area code (limited to 16 bits) and the second as the 32 bit " Param:number "."
+IPar	"These alternate forms of a telephone number also flow through a displayer evaluation of the form [UV4:DisplayerTele " Param:int2value "] \
+where " Param:int2value " is the " Param:areacode " and " Param:number " components of the value. See below for an \
+example of how this all fits together."
+Syntax
+DptSyn	"[" Param:type ":]" "+" Param:ccc "(" Param:aaa ")" Param:nnnn "[x" Param:ext "] "	"where " Param:type " is the type of phone: {HOME, CELL, WORK or FAX}, " Param:ccc " is optional country code, " Param:aaa " is the \
+city/areacode, " Param:nnnn " is the number and " Param:ext " is an optional extension."
+DptSyn	Param:aaannnn	"punctuation is optional and dashes may be inserted anywhere in the number."
+DPTSyn	"<i>none</i>"	"Refers to <i>no telephone</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i."
+DPTSyn	"<i>other</i>"	"A special keyword that has previously been assigned to this point type with the " IntMod:V4 "(" TagName:Name "::" Param:keyword ") module."
+Examples
+EX	(800)555-1234
+EXWD	8005551234	both numbers are equivalent
+EXWD	MakeP(Dim:Tele 800 5551234)	creates telephone point identical to above on dimension Tele
+EXWD	[Exchange Tele..] List(List:=Tele* Nth::2)	extracts the area code from a telephone number point
+EXWD	Dim THash Int Bind 5	A behind-the-scenes dimension
+EXWD	[UV4:AcceptorTele Alpha..]	This is the acceptor binding
+EXWD	&nbsp;Do(Context::Str(Alpha* Hash32?) BindQE([Email THash:=Int*] Alpha*) Int*)	Only using the number
+EXWD	[UV4:DisplayerTele Int2..]	This is the displayer binding
+EXWD	&nbsp;[EMail THash:=List(List:=Int2* Nth::2)],"?"	(only looking at the number portion)
+DPT	UDate	Universal Date Dimension Type	DateTime
+Desc
+IPar	"A universal date is a 32 bit integer representing the number of days from the base date of 17-Nov-1858 \
+(<a href='http://tycho.usno.navy.mil/mjd.html' target=_blank>Smithsonian Astronomical Standard</a>)."
+IPar	"Small negative values for dates are permitted to represent non-date dates such as \"TBD\" or \"n/a\" (see the " TagName:Name " tag \
+within the " IntMod:V4 " module description.) When formatted (" IntMod:Format ") or exported to HTML or Excel negative dates \
+are converted to dates beginning with January 1, 1800 (-1 becomes 1-Jan-1800, -2 becomes 2-Jan-1800, etc.)"
+IPar	"Universal dates span the range of dates from November 17, 1858 through August 31, 2132."
+IPar	"The " TagName:YMDOrder " option may be given to specify the ordering of year, month, and day within a date value."
+Syntax
+DPTSyn	Param:yyyymmdd	"where " Param:yyyy " is the year, " Param:mm " is the month, and " Param:dd " is the day. (Note: See the YMDOrder attribute)"
+DPTSyn	Param:yymmdd	"If only two digits of the year are given then any year less than 20 is assumed to be in the 21st century otherwise the 20'th century is used. (Note this convention will probably change as we progress into the 21st century.)"
+DPTSyn	Param:mmddyy	"If the dimension is declared with the <b>MMDDYY</b> attribute then dates are assumed to be month-day-year, not " Param:yymmdd "."
+DPTSyn	"#" Param:nnnn	"where " Param:nnnn " is the internal number of days offset from the base date."
+DPTSyn	"+" Param:days	"represents " Param:days " from today."
+DPTSyn	"-" Param:days	"represents " Param:days " ago."
+DPTSyn	Param:relexp	"A relative date expression, See <a href='v4refconcepts.htm#relDateCalcs'>here</a> for details and examples."
+DPTSyn	"Today"	"represents the current date. (See v4_home:V4LanguageInfo.v4i for language specific values.)"
+DPTSyn	"Current"	"represents the current date. (See v4_home:V4LanguageInfo.v4i for language specific values.)"
+DPTSyn	"Yesterday"	"represents yesterday's date."
+DPTSyn	"Tomorrow"	"represents tomorrow's date."
+DPTSyn	"<i>none</i>"	"Refers to <i>no date</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i. \
+For historical reasons the null value is equivalient to " Param:dim ":#0."
+DPTSyn	"<i>other</i>"	"A special keyword that has previously been assigned to this point type with the " IntMod:V4 "(" TagName:Name "::" Param:keyword ") module."
+DPTSyn	"{now}"	"always refers to the current date. This construct differs from \"Today\" above in that it represents the \
+current date whenever it is referenced. All of the other dates are static and are determined when parsed, not referenced."
+DPTSyn	"{current}"	"This is synonomous with {now}."
+Examples
+EX	Dim UDate UDate
+EX	Bind [IM:Item123 UDate:951001 Sales] 4300
+EXWD	UDate:-7..+3	a range of dates from 7 days ago to 3 days from now
+DPT	UMonth	Universal Month Dimension Type	DateTime
+Syntax
+DPTSyn	Param:yyyymm	"where " Param:yyyy " is the year and " Param:mm " is the month. (Note: See the YMDOrder attribute)"
+DPTSyn	Param:yymm	"See " PntType:UDate " for specifying the year with only two digits."
+DPTSyn	"#" Param:nnnn	"where " Param:nnnn " is the internal number representing the number of months from the base month of January 1850."
+DPTSyn	Param:relexp	"A relative date expression, See <a href='v4refconcepts.htm#relDateCalcs'>here</a> for details and examples."
+DPTSyn	"{now}"	"always refers to the current month"
+DPTSyn	"{current}"	"This is synonomous with {now}."
+DPTSyn	"Current"	"This is synonomous with {now}."
+DPTSyn	"<i>none</i>"	"Refers to <i>no month</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i. \
+For historical reasons the null value is equivalient to " Param:dim ":#0."
+DPTSyn	"<i>other</i>"	"A special keyword that has previously been assigned to this point type with the " IntMod:V4 "(" TagName:Name "::" Param:keyword ") module."
+Desc
+IPar	"A universal month is a 32 bit integer representing the number of months from the base month of January 1850."
+IPar	"The " TagName:YMDOrder " option may be given to specify the ordering of year, month, and day within a date value."
+IPar	"Small negative values for dates are permitted to represent non-date dates such as \"TBD\" or \"n/a\" (see the " TagName:Name " tag \
+within the " IntMod:V4 " module description.) When formatted (" IntMod:Format ") or exported to HTML or Excel negative dates \
+are converted to months beginning with January 1800 (-1 becomes Jan-1800, -2 becomes Feb-1800, etc.)"
+IPar	"Years must be within the range of 1858 to 2200."
+Examples
+EX	Dim UMonth UMonth
+EX	Bind [Cus* UMonth:9501 Sales] 4300
+DPT	Unicode	Unicode Dimension Type	AlphaList
+Desc
+IPar	"The Unicode dimension type is used for expanded alpha-numeric points. Points are stored as a string of 16-bit bytes. \
+See the " PntType:Alpha " dimension type for more information."
+DPT	UOM	Units of Measure	Special
+Desc
+IPar	"The V4 unit-of-measure (and associated unit-of-measure-per) point type permits the designer to represent and manipulate many different unit-of-measure quantities. Examples include weight conversions, time conversions, quantity conversions, and currency conversions."
+IPar	"V4 has no predefined units-of-measure. The " IntMod:UOM " module is used to define interrelationships among different units (e.g. 1 dozen = 12 each)."
+DPTSyn	Param:nnnsss	"where " Param:nnn " is a number or quantity and " Param:sss " is a unit-of-measure suffix."
+DPTSyn	Param:pppnnn	"where " Param:ppp " is a unit-of-measure prefix and " Param:nnn " is a number or quantity."
+DPTSyn	"<i>none</i>"	"Refers to <i>no unit-of-measure</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i."
+Examples
+EXWD	Dim U UOM Range UOMId 1	defines a unit-of-measure dimension
+EXWD	UOM(Id::1 Index::1 Factor::1 Label::"ea" Partial::1)	defines "ea" (for each)
+EXWD	UOM(Id::1 Index::2 Factor::12 Label::"dz")	defines "dz" (for dozen)
+EXWD	{ U:1dz / U:1e }	results in Num:12
+EXWD	{ U:1ea / U:1dz }	results in Num:0.0833333333333333
+EXWD	{U:1dz + U:1}	results in U:1.08333333333333dz (U:1 defaults to '1ea')
+EXWD	Sum((U:1dz U:2dz U:3ea))	results in U:39ea
+DPT	UOMPer	Quantity per Units of Measure	Special
+Desc
+IPar	"The UOMPer point type associates a scaler with a unit of measure. A common example would be the price of produce at a supermarket. Produce is often sold at $x per some unit, often weight."
+DPTSyn	Param:nnnn "/" Param:uom	"where " Param:scaler " is a an integer or floating point number and " Param:uom " is a valid unit-of-measure specification."
+DPTSyn	"<i>none</i>"	"Refers to <i>no UOMPer</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i."
+Examples
+EXWD	Dim U UOM Range UOMId 1	define unit of measure
+EXWD	Dim P UOMPer Range UOMId 1	define per-unit of measure dimension
+EXWD	Bind [UV4:UOMInitialize]	define binding that is automatically evaluated to define the unit of measure dimensions.
+EX	"&nbsp;Do(UOM(Id::1 Index::1 Factor::1 Label::"ea" Partial::1)
+EX	"&nbsp;&nbsp;&nbsp;&nbsp;UOM(Id::1 Index::2 Factor::12 Label::"dz"))
+EXWD	{ U:12ea * P:10.55/1dz }	results in Num:10.55
+EXWD	{ U:12dz * P:10.0/1dz }	results in Num:120
+EXWD	{ U:12dz * P:10.55/1ea }	results in Num:1519.2
+EXWD	{ P:10.55/1dz / U:12ea}	fails - this is meaningless
+DPT	UOMPerUOM	Unit of Measure per Unit of Measure	Special
+Desc
+IPar	"The UOMPerUOM point type combines two units-of-measure into a single point type. There is currently only limited support for this point type \
+within V4. The only arithmetic operation supported for this point type is multiplication (" IntMod:Mult "). Multiplying a UOMperUOM point by a UOM \
+point, where the UOM matches the <i>denominator</i> (second) UOM of the UOMperUOM point results in a UOM point from the <i>numerator</i>. The V4 \
+module " IntMod:UOM " may be used to break a " PntType:UOMperUOM " point into its component units-of-measure."
+DPTSyn	"<i>no syntax</i>"	"points may only be constructed with the " IntMod:MakeP " module."
+DPT	UPeriod	Universal (Accounting) Period	DateTime
+DPTSyn	Param:yyyypp	"where " Param:yyyy " is the year and " Param:pp " is a period (1-13 or 90-99)"
+DPTSyn	Param:yypp	"See " PntType:UDate " for specifying the year with only two digits."
+DPTSyn	"#" Param:nnnn	"where " Param:nnnn " is the internal period number with period #0 being 1850/01"
+DPTSyn	"<i>none</i>"	"Refers to <i>no period</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i. \
+For historical reasons the null value is equivalient to " Param:dim ":#0."
+DPTSyn	"<i>other</i>"	"A special keyword that has previously been assigned to this point type with the " IntMod:V4 "(" TagName:Name "::" Param:keyword ") module."
+Desc
+IPar	"Dimensions of this type represent accounting periods. There are normally thirteen periods in a year. Periods are represented as consecutive numbers so that arithmetic can be performed. \
+For instance {Period* + 13} represents the same period in the next year. The difference between two periods is the number of periods between them."
+IPar	"The default of 13 periods per year can be altered by giving the <b>Periods</b> " Param:num " option."
+IPar	"There are 10 special periods per year which can be used to represent year end adjustment periods. These are represented by the periods 90 through 99. \
+The adjustment periods are not consecutive and arithmetic on these will not yield meaningful results. Some example periods are shown below-"
+IPar	"Period years must be within the range of 1858 to 2200."
+Examples
+EX	Dim P UPeriod
+EXWD	P:9703	is the third period of fiscal 1997
+EXWD	P:9613	is the last period of fiscal 1996
+EXWD	P:9791	is a year-end adjustment period
+DPT	UQuarter	Universal Quarter	DateTime
+Desc
+IPar	"Dimensions of type UQuarter represent the quarters of a year. There are, obviously, four quarter per year and they are internally represented as consecutive numbers so that arithmetic is possible. Examples of quarters are-"
+DPTSyn	Param:yyyyqq	"where " Param:yyyy " is the year and " Param:qq " is a quarter (01-04)"
+DPTSyn	Param:yyqq	"See " PntType:UDate " for specifying the year with only two digits."
+DPTSyn	Param:relexp	"A relative date expression, See <a href='v4refconcepts.htm#relDateCalcs'>here</a> for details and examples."
+DPTSyn	"#" Param:nnnn	"where " Param:nnnn " is the internal quarter number with quarter #0 being 1850/01"
+DPTSyn	Current	"The current quarter."
+DPTSyn	"<i>none</i>"	"Refers to <i>no quarter</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i. \
+For historical reasons the null value is equivalient to " Param:dim ":#0."
+DPTSyn	"<i>other</i>"	"A special keyword that has previously been assigned to this point type with the " IntMod:V4 "(" TagName:Name "::" Param:keyword ") module."
+Examples
+EX	Dim Q Quarter
+EXWD	Q:9703	the third quarter of 1997
+EXWD	Minus(Q:9703 Q:9603)	returns 4
+DPT	UTime	Universal DateTime Time	DateTime
+Desc
+IPar	"UTime points represent the seconds in any given day. The values span period from midnight to 11:59:59. UTime points are not associated with any particular date. Use the " PntType:DateTime " point type to reference a time within a given day."
+DPTSyn	Param:hh ":" Param:mm "[:" Param:ss "[." ff "]]"	"where " Param:hh " is the hour (0-23), " Param:mm " is the minute (0-59), " Param:ss " is the optional seconds (0-59), and \
+ff is optional fractional seconds."
+DPTSyn	"<i>none</i>"	"Refers to <i>no time</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i. \
+The null value is equivalient to " Param:dim ":#-1."
+DPTSyn	"<i>other</i>"	"A special keyword that has previously been assigned to this point type with the " IntMod:V4 "(" TagName:Name "::" Param:keyword ") module."
+Examples
+EXWD	T:12:01:30	corresponds to 90 seconds past noon
+DPT	URL	"A Uniform Resource Locator"	AlphaList Special
+Desc
+IPar	"The URL point type is currently parsed and handled as an " PntType:Alpha " point type. It has been included for future functionality."
+DPTSyn	"same as " PntType:Alpha	""
+DPT	UWeek	Universal Week	DateTime
+IPar	"Dimensions of type UWeek represent the weeks of a year. There are 52 weeks in a given year and like all the other U-time dimension types, are stored internally as consecutive numbers."
+IPar	"V4 provides an automatic mapping from " PntType:UDate " to " PntType:UWeek " on the assumtpion that weeks start on Mondays. This cannot be a perfect mapping because a year may have 365 or \
+366 days while 52*7 is only 364 days. A further complication is attempting to have all weeks begin on a particular day. The compromise made by V4 is to assign the first Monday of each year as the \
+basis for week 1 of that year. However all days in the year before that first Monday are also included in week 1. It is also possible to have a year with more than 52 Mondays. In this case, any days \
+of a year that would roll into week 53 are automatically truncated back to week 52. It is up to those of you using the " PntType:UWeek " dimension to figure how best to handle the end-of-year and \
+begin-of-year rollover."
+IPar	"V4 supports an alternative meaning for points of " PntType:UWeek "- the number of weeks based on an arbitrary starting date defined when the dimension is declared (see the BaseDate option \
+in the " Command:Dimension " command and the " TagName:BaseDate " option in the " IntMod:Dim " module). In this case the week is treated as an integer week number with the first week being week 1. \
+Week numbers less than 1 are not defined. The coercion of " PntType:UDate " to " PntType:UWeek " in this case is straightforward- the offset from the base date divided by 7."
+DPTSyn	Param:yyyyww	"where " Param:yyyy " is the year and " Param:w " is a week (01-52)"
+DPTSyn	Param:yyww	"See " PntType:UDate " for specifying the year with only two digits."
+DPTSyn	Param:ww	"The week number off of the base date, with 1 corresponding to the first week."
+DPTSyn	"#" Param:nnnn	"where " Param:nnnn " is the internal week number with week #0 being 1850/01"
+DPTSyn	"<i>none</i>"	"Refers to <i>no week</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i. \
+For historical reasons the null value is equivalient to " Param:dim ":#0."
+DPTSyn	"<i>other</i>"	"A special keyword that has previously been assigned to this point type with the " IntMod:V4 "(" TagName:Name "::" Param:keyword ") module."
+Desc
+IPar	"Years must be within the range of 1858 to 2200."
+Examples
+EX	Dim W UWeek
+EXWD	W:9713	the 13th week of 1997
+EXWD	{53 + W:9602}	W:9703
+DPT	UYear	Universal Year	DateTime
+Desc
+IPar	"Dimensions of type UYear represent years."
+DPTSyn	Param:yyyy	"where " Param:yyyy " is the year"
+DPTSyn	Param:yy	"See " PntType:UDate " for specifying the year with only two digits"
+DPTSyn	Param:relexp	"A relative date expression, See <a href='v4refconcepts.htm#relDateCalcs'>here</a> for details and examples."
+DPTSyn	"{now}"	"always references the current year"
+DPTSyn	"{current}"	"This is synonomous with {now}."
+DPTSyn	"Current"	"This is synonomous with {now}."
+DPTSyn	"<i>none</i>"	"Refers to <i>no year</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i. \
+For historical reasons the null value is equivalient to " Param:dim ":#0."
+DPTSyn	"<i>other</i>"	"A special keyword that has previously been assigned to this point type with the " IntMod:V4 "(" TagName:Name "::" Param:keyword ") module."
+Examples
+EX	Dim Y UYear
+EXWD	Y:1996	the year 1996
+EXWD	In(UDate:970415 Y:1996..1998)	Logical:True
+DPT	V4IS	A V4IS Area/Record	V4 Database
+Desc
+IPar	"Universal years must be within the range of 1858 to 2200."
+IPar	"Points on dimensions of this type represent V4IS areas and records. The V4ISxxx modules are the only way to manipulate points on a V4IS dimension."
+DPTSyn	"V4IS points are created solely via the " PntType:V4ISCon " module."	""
+DPTSyn	Param:none	"Refers to <i>no V4IS point</i>. The keyword <i>none</i> is the language specific value given in v4_home:V4LanguageInfo.v4i."
+Examples
+EX	Context(V4ISCon(Dim:V Area::"table.dat" FileRef::9027 Open::1 KeyNum::1 Key::1))

@@ -1,0 +1,1169 @@
+!	V4DocTest.v4 - Test of V4 Documentation in V4
+
+Area Create v4doc.v4x External
+Include v4
+Dim Param External Case
+Dim PntType External Case
+Dim Command External Case
+Dim TagName,TagResName External Case
+Dim Option External Case
+Dim FuncCat Dict Bind 5 PointCreate Point	Desc "Functional Category"
+Dim DPTFuncCat Dict Bind 5 PointCreate Point	Desc "DPT Functional Category"
+Dim CmdFuncCat Dict Bind 5 PointCreate Point	Desc "Command Functional Category"
+Dim ImgGif Dict
+Dim ListType Dict
+Dim File Alpha FileName
+
+Dim DPT Int Bind 5 PointCreate New
+Dim Mod Int Bind 5 PointCreate New
+Dim Usage Int Bind 5 PointCreate New
+Dim Params Int Bind 5 PointCreate New
+Dim Opt Int Bind 5 PointCreate New
+Dim TagArg,Tag2Arg Int Bind 5 PointCreate New
+Dim TagResArg,Tag2ResArg Int Bind 5 PointCreate New
+Dim Thread Int Bind 5 PointCreate New
+Dim DPTSyn Int Bind 5 PointCreate New
+Dim PSpec Int Bind 5 PointCreate New
+Dim SUS Int Bind 5 PointCreate New
+Dim Index Int Bind 5 PointCreate New
+Dim IEntry Dict Bind 5			Desc "Index Entry"
+Dim BookMark Alpha
+Dim SubEntry Alpha
+Dim IEType,SEType Dict			/* Index entry/subentry type */
+
+Dim Cmd Int Bind 5 PointCreate New
+Dim CUsage Int Bind 5 PointCreate New
+Dim Chapter Dict
+
+Dim Tbl Int Bind 5 PointCreate New
+Dim TE Int Bind 5 PointCreate New
+
+Dim EXML Int Bind 5 PointCreate New
+Dim ML Int Bind 5 PointCreate New
+Dim ListHalf,ListThird Int
+
+Table Intro Macro Intro
+ Col KW Alpha Ignore
+ Col Chapter *
+ Col Name Alpha
+EndTable
+{/Intro()
+Bind [Chapter* Name] Name ;
+Context Add Thread+ ;
+Bind [Chapter* Thread] Thread* ;
+}/Intro
+
+Dim SectionId Int PointCreate New
+Table Section Macro Section
+ Col KW Alpha Ignore
+ Col Name Alpha
+ Col Bookmark * Default ""
+EndTable
+{/Section()
+Bind [Type Thread*] SECTION ;
+Bind [Name Thread*] Name* ;
+Bind [BookMark Thread*] Bookmark* ;
+Context Add SectionId+ ;
+Bind [SectionId Thread*] SectionId* ;
+Set Parameter a `Thread* ;
+Context Add Thread:{new} ;
+Bind [NextThread Thread:#a#] Thread* ;
+Bind [PriorThread Thread*] Thread:#a# ;
+}/Section
+
+Table Cmd Macro Cmd
+ Col KW Alpha Ignore
+ Col Name Alpha
+ Col Desc Alpha Quoted
+ Col Categories List
+ Col AddCmds List Default List:()
+EndTable
+{/Cmd()
+Set Param e "CMD"
+Context Add Cmd:{new} ;
+Bind [Cmd* Name] Name* ;
+Bind [Cmd* Desc] Desc* ;
+Bind [Cmd* Categories] Categories* ;
+Bind [Cmd* AddCmds] AddCmds* ;
+}/Cmd
+
+Table CmdFuncCat Macro CmdFuncCat
+ Col KW Alpha Ignore
+ Col CmdFuncCat *
+ Col Desc Alpha Quoted
+EndTable
+{/CmdFuncCat()
+Point CmdFuncCat CmdFuncCat* ;
+Bind [CmdFuncCat* Desc] Desc* ;
+}/CmdFuncCat
+
+Table DPT Macro DPT
+ Col KW Alpha Ignore
+ Col Name Alpha
+ Col Desc Alpha Quoted
+ Col DPTCat List Default List:()
+EndTable
+{/DPT()
+Set Param e "DPT"
+Context Add DPT:{new} ;
+Bind [DPT* Name] Name* ;
+Bind [DPT* Desc] Desc* ;
+Context Add Thread:{new} ;
+Bind [DPT* IntroThread] Thread* ;
+Bind [DPT* Categories] DPTCat* ;
+}/DPT
+
+Table DPTFuncCat Macro DPTFuncCat
+ Col KW Alpha Ignore
+ Col DPTFuncCat *
+ Col Desc Alpha Quoted
+EndTable
+{/DPTFuncCat()
+Point DPTFuncCat DPTFuncCat* ;
+Bind [DPTFuncCat* Desc] Desc* ;
+}/DPTFuncCat
+
+Table CUsage Macro CUsage
+ Col KW Alpha Ignore
+ Col CmdName Alpha Quoted
+ Col Arguments Alpha Quoted
+ Col ArgPrefix Alpha Default " " Quoted
+ Col ArgSuffix Alpha Default " " Quoted
+EndTable
+{/CUsage()
+Context Add CUsage:{new} ;
+Bind [CUsage* Cmd] Cmd* ;
+Bind [CUsage* CmdName] CmdName* ;
+Bind [CUsage* Arguments] Arguments* ;
+Bind [CUsage* ArgPrefix] ArgPrefix* ;
+Bind [CUsage* ArgSuffix] ArgSuffix* ;
+}/CUsage
+
+Table CExamples Macro CExamples
+ Col KW Alpha Ignore
+EndTable
+{/CExamples()
+Context Add Thread:{new} ;
+Bind [Cmd* ExampleThread] Thread* ;
+}/CExamples
+
+Table Opt Macro Opt
+ Col KW Alpha Ignore
+ Col Name Alpha Quoted
+ Col Argument Alpha Default "" Quoted
+ Col LText List Quoted
+EndTable
+{/Opt()
+Context Add Opt+ ;
+Bind [Opt* Thread] Thread* ;
+Bind [Opt* Name] Name* ;
+Bind [Opt* Argument] Argument* ;
+Bind [Opt* LText] LText* ;
+If1 Same #e# "CMD" Bind [Opt* Cmd] Cmd* ;
+}/Opt
+
+Table FuncCat Macro FuncCat
+ Col KW Alpha Ignore
+ Col FuncCat *
+ Col Desc Alpha Quoted
+EndTable
+{/FuncCat()
+Point FuncCat FuncCat* ;
+Bind [FuncCat* Desc] Desc* ;
+}/FuncCat
+
+Table Mod Macro Mod
+ Col KW Alpha Ignore
+ Col Name Alpha
+ Col Desc Alpha Quoted
+ Col Categories List
+EndTable
+{/Mod()
+Set Param e "MOD"
+Context Add Mod:{new} ;
+Bind [Mod* Name] Name* ;
+Bind [Mod* Desc] Desc* ;
+Bind [Mod* Categories] Categories* ;
+}/Mod
+[modHTMLFile Alpha..] Str("v4refmod_" Str(Alpha* Head::1) ".htm")
+[modOutId Mod..] NId:=Str(Mod.name Head::1)
+
+
+Table Usage Macro Usage
+ Col KW Alpha Ignore
+ Col Result Alpha Quoted
+ Col Arguments List Quoted
+EndTable
+{/Usage()
+Context Add Usage:{new} ;
+Bind [Usage* Mod] Mod* ;
+Bind [Usage* Result] Result* ;
+Bind [Usage* Arguments] Arguments* ;
+}/Usage
+
+Table UsageX Macro UsageX
+ Col KW Alpha Ignore
+ Col Result Alpha Quoted
+ Col Name Alpha Quoted
+ Col Arguments List Quoted
+EndTable
+{/UsageX()
+Context Add Usage:{new} ;
+Bind [Usage* Mod] Mod* ;
+Bind [Usage* Result] Result* ;
+Bind [Usage* XName] Name* ;
+Bind [Usage* Arguments] Arguments* ;
+}/UsageX
+
+Table Params Macro Params
+ Col KW Alpha Ignore
+ Col Name Alpha
+ Col LText List Quoted
+EndTable
+{/Params()
+Context Add Params:{new} ;
+If1 Same #e# "MOD" Bind [Params* Mod] Mod* ;
+If1 Same #e# "CMD" Bind [Params* Cmd] Cmd* ;
+Bind [Params* Name] Name* ;
+Bind [Params* LText] LText* ;
+}/Params
+
+Table Tag Macro Tag
+ Col KW Alpha Ignore
+ Col Tag TagName
+ Col Argument Alpha Default Alpha:""
+ Col LText List Quoted
+EndTable
+{/Tag()
+Context Add TagArg:{new} ;
+Bind [TagArg* Mod] Mod* ;
+Bind [TagArg* Tag] Tag* ;
+Bind [TagArg* Argument] Argument* ;
+Bind [TagArg* LText] LText* ;
+}/Tag
+
+Table TagRes Macro TagRes
+ Col KW Alpha Ignore
+ Col Tag TagName
+ Col LText List Quoted
+EndTable
+{/TagRes()
+Context Add TagResArg:{new} ;
+Bind [TagResArg* Mod] Mod* ;
+Bind [TagResArg* Tag] Tag* ;
+Bind [TagResArg* LText] LText* ;
+}/TagRes
+
+Table Tag2 Macro Tag2
+ Col KW Alpha Ignore
+ Col Tag TagName
+ Col Argument Alpha Default Alpha:""
+ Col LText List Quoted
+EndTable
+{/Tag2()
+Context Add Tag2Arg:{new} ;
+Bind [Tag2Arg* Mod] Mod* ;
+Bind [Tag2Arg* Tag2] Tag* ;
+Bind [Tag2Arg* Argument] Argument* ;
+Bind [Tag2Arg* LText] LText* ;
+}/Tag2
+
+Table Tag2Res Macro Tag2Res
+ Col KW Alpha Ignore
+ Col Tag TagName
+ Col LText List Quoted
+EndTable
+{/Tag2Res()
+Context Add Tag2ResArg:{new} ;
+Bind [Tag2ResArg* Mod] Mod* ;
+Bind [Tag2ResArg* Tag2] Tag* ;
+Bind [Tag2ResArg* LText] LText* ;
+}/Tag2Res
+
+
+Table Desc Macro Desc
+ Col KW Alpha Ignore
+EndTable
+{/Desc()
+Context Add Thread:{new} ;
+If1 Same #e# "MOD" Bind [Mod* DescThread] Thread* ;
+If1 Same #e# "CMD" Bind [Cmd* DescThread] Thread* ;
+If1 Same #e# "DPT" Bind [DPT* DescThread] Thread* ;
+}/Desc
+
+Table Syntax Macro Syntax
+ Col KW Alpha Ignore
+EndTable
+{/Syntax()
+Context Add Thread:{new} ;
+Bind [DPT* SyntaxThread] Thread* ;
+}/Syntax
+
+Table DimDcl Macro DimDcl
+ Col KW Alpha Ignore
+ Col Args List Quoted
+EndTable
+{/DimDcl()
+Bind [DPT* DimDcl] Args* ;
+}/DimDcl
+
+Table DPTSyn Macro DPTSyn		/* Syntax specification for dimension point type */
+ Col KW Alpha Ignore
+ Col Spec List Quoted
+ Col Desc List Quoted
+EndTable
+{/DPTSyn()
+Context Add DPTSyn+ ;
+Bind [DPT DPTSyn*] DPT* ;
+Bind [Spec DPTSyn*] Spec* ;
+Bind [Desc DPTSyn*] Desc* ;
+}/DPTSyn
+
+Table Examples Macro Examples
+ Col KW Alpha Ignore
+EndTable
+{/Examples()
+Context Add Thread:{new} ;
+If1 Same #e# "DPT" Bind [DPT* ExampleThread] Thread* ;
+If1 Same #e# "MOD" Bind [Mod* ExampleThread] Thread* ;
+If1 Same #e# "CMD" Bind [Cmd* ExampleThread] Thread* ;
+}/Examples
+
+Table IPar Macro IPar
+ Col KW Alpha Ignore
+ Col LText List Quoted
+EndTable
+{/IPar()
+Bind [Type Thread*] IPar ;
+Bind [LText Thread*] LText* ;
+Set Parameter a `Thread* ;
+Context Add Thread:{new} ;
+Bind [NextThread Thread:#a#] Thread* ;
+Bind [PriorThread Thread*] Thread:#a# ;
+}/IPar
+
+Table List Macro List
+ Col KW Alpha Ignore
+ Col ListType *
+EndTable
+{/List()
+Bind [Type Thread*] List ;
+Bind [ListType Thread*] ListType* ;
+Set Parameter a `Thread* ;
+Context Add Thread:{new} ;
+Bind [NextThread Thread:#a#] Thread* ;
+Bind [PriorThread Thread*] Thread:#a# ;
+}/List
+
+Table EndList Macro EndList
+ Col KW Alpha Ignore
+EndTable
+{/EndList()
+Bind [Type Thread*] EndList ;
+Set Parameter a `Thread* ;
+Context Add Thread:{new} ;
+Bind [NextThread Thread:#a#] Thread* ;
+Bind [PriorThread Thread*] Thread:#a# ;
+}/EndList
+
+Table Entry Macro Entry
+ Col KW Alpha Ignore
+ Col LText List Quoted
+EndTable
+{/Entry()
+Bind [Type Thread*] Entry ;
+Bind [LText Thread*] LText* ;
+Set Parameter a `Thread* ;
+Context Add Thread:{new} ;
+Bind [NextThread Thread:#a#] Thread* ;
+Bind [PriorThread Thread*] Thread:#a# ;
+}/Entry
+
+Table Par Macro Par
+ Col KW Alpha Ignore
+ Col LText List Quoted
+EndTable
+{/Par()
+Bind [Type Thread*] Par ;
+Bind [LText Thread*] LText* ;
+Set Parameter a `Thread* ;
+Context Add Thread:{new} ;
+Bind [NextThread Thread:#a#] Thread* ;
+Bind [PriorThread Thread*] Thread:#a# ;
+}/Par
+
+Table Heading Macro Heading
+ Col KW Alpha Ignore
+ Col Heading Alpha Quoted
+EndTable
+{/Heading()
+Bind [Type Thread*] Heading ;
+Bind [Heading Thread*] Heading* ;
+Set Parameter a `Thread* ;
+Context Add Thread:{new} ;
+Bind [NextThread Thread:#a#] Thread* ;
+Bind [PriorThread Thread*] Thread:#a# ;
+}/Heading
+
+Table EX Macro EX
+ Col KW Alpha Ignore
+ Col Text Alpha Quoted
+EndTable
+{/EX()
+Bind [Type Thread*] EX ;
+Bind [Text Thread*] Text* ;
+Set Parameter a `Thread* ;
+Context Add Thread:{new} ;
+Bind [NextThread Thread:#a#] Thread* ;
+Bind [PriorThread Thread*] Thread:#a# ;
+}/EX
+
+Table EXWD Macro EXWD
+ Col KW Alpha Ignore
+ Col Text Alpha Quoted
+ Col Desc Alpha Quoted
+EndTable
+{/EXWD()
+Bind [Type Thread*] EXWD ;
+Bind [Text Thread*] Text* ;
+Bind [Desc Thread*] Desc* ;
+Set Parameter a `Thread* ;
+Context Add Thread:{new} ;
+Bind [NextThread Thread:#a#] Thread* ;
+Bind [PriorThread Thread*] Thread:#a# ;
+}/EXWD
+
+Table EXML Macro EXML		/* Multi-line example */
+ Col KW Alpha Ignore
+ Col LText List Quoted
+EndTable
+{/EXML()
+Context Add EXML:{new} ;
+Bind [EXML* LText] LText* ;
+Bind [Type Thread*] EXML ;
+Bind [EXML Thread*] EXML* ;
+Set Parameter a `Thread* ;
+Context Add Thread:{new} ;
+Bind [NextThread Thread:#a#] Thread* ;
+Bind [PriorThread Thread*] Thread:#a# ;
+}/EXML
+
+Table ML Macro ML
+ Col KW Alpha Ignore
+ Col Line Alpha Quoted
+ Col Desc Alpha Default "" Quoted
+EndTable
+{/ML()
+Context Add ML:{new} ;
+Bind [ML* EXML] EXML* ;
+Bind [ML* Line] Line* ;
+Bind [ML* Desc] Desc* ;
+}/ML
+
+
+Table Table Macro Table
+ Col KW Alpha Ignore
+ Col Name Alpha Quoted
+ Col pcWidth Int
+ Col Border Alpha Default "'0'" Quoted
+ Col Background Alpha Default "none" Quoted
+EndTable
+{/Table()
+Context Add Tbl:{new} ;
+Bind [Tbl* Name] Name* ;
+Bind [Tbl* pcWidth] pcWidth* ;
+Bind [Tbl* Border] Border* ;
+Bind [Tbl* Background] Background* ;
+Bind [Type Thread*] Tbl ;
+Bind [Tbl Thread*] Tbl* ;
+Set Parameter a `Thread* ;
+Context Add Thread:{new} ;
+Bind [NextThread Thread:#a#] Thread* ;
+Bind [PriorThread Thread*] Thread:#a# ;
+}/Table
+
+Table TE Macro TE
+ Col KW Alpha Ignore
+ Col Row List Quoted
+EndTable
+{/TE()
+Context Add TE:{new} ;
+Bind [TE* Table] Tbl* ;
+Bind [TE* Row] Row* ;
+}/TE
+
+Table PSpec Macro PSpec
+ Col KW Alpha Ignore
+ Col Spec Alpha
+ Col LText List Quoted
+EndTable
+{/PSpec()
+Context Add PSpec+ ;
+Bind [PSpec* Spec] Spec* ;
+Bind [PSPec* LText] LText* ;
+}/PSpec
+
+Table SUS Macro SUS
+ Col KW Alpha Ignore
+ Col Switch Alpha
+ Col Params Alpha Default ""
+ Col LText List Quoted
+EndTable
+{/SUS()
+Context Add SUS+ ;
+Bind [SUS* Switch] Switch* ;
+Bind [SUS* Params] Params* ;
+Bind [SUS* LText] LText* ;
+}/SUS
+Table SUSBegin Macro SUSBegin
+ Col KW Alpha Ignore
+EndTable
+{/SUSBegin()
+Bind [Type Thread*] SUS ;
+Set Parameter a `Thread* ;
+Context Add Thread:{new} ;
+Bind [NextThread Thread:#a#] Thread* ;
+Bind [PriorThread Thread*] Thread:#a# ;
+}/SUSBegin
+
+Table Index Macro Index
+ Col KW Alpha Ignore
+ Col IEntry *
+ Col IEType *
+ Col Bookmark Isct
+ Col SubEntry * Default SubEntry:""
+ Col SEType * Default SEType:Other
+EndTable
+{/Index()
+Context Add Index+ ;
+Bind [Index* IEntry] IEntry* ;
+Bind [Index* IEType] IEType* ;
+EBind [Index* Bookmark] Bookmark* ;
+Bind [Index* SubEntry] SubEntry* ;
+Bind [Index* SEType] SEType* ;
+}/Index
+
+Table Doc
+ Col Doc Alpha NPTable
+EndTable
+
+
+Dim Entry Shell
+[LTextToText List..]
+ Do(Str(`EnumCL(List* Shell::Dim:Entry
+     @TEQ(Dim:=Entry*
+	Dim:Command	Str("<a href='v4refcommands.htm#Command:" Entry* "'><b>" Entry* "</b></a>")
+	Dim:PntType	Str("<a href='v4refdimtype.htm#PntType:" Entry* "'><b>" Entry* "</b></a>")
+	Dim:Alpha	Entry*
+	Dim:IntMod	If(EQk(Mod.Name,xx Entry*) Then::Str("<font id=I>" Entry* "</font>")
+!			    Else::Str("<a href=" If(Str(Entry* Head::("Fin" "Stat")) Then::"v4refmodFinStat" Else::"v4refmodules") ".htm#IntMod:" Entry* "><font id=I>" Entry* "</font></a>"))
+			    Else::Str("<a href=" [modHTMLFile Alpha:=Entry*] "#IntMod:" Entry* "><font id=I>" Entry* "</font></a>"))
+	Dim:ImgGif	Str("<img src='" Entry* ".gif' align='center'>")
+	Dim:Tag		Str("<font id=T>" Entry* "</font>")
+	Dim:TagName	Str("<font id=T>" Entry* "</font>")
+	Dim:TagResName	Str("<font id=T>" Entry* "?" "</font>")
+	Dim:Option	Str("<font id=O>" Entry* "</font>")
+	Dim:Param	Str("<i>" Entry* "</i>")
+			Str("?Dim:" Dim:=Entry* " " Entry*))))
+   )
+
+[Styles]
+ Str("<style type='text/css'>\n"
+	"#I { color: Blue;}\n"
+	"#Section { font-family: arial; font-size: 16pt;padding-top: 10px; padding-bottom:10px; border-bottom-style: solid; border-bottom-width: 4px; border-bottom-color: blue; border-top-style: solid; border-top-width: 4px; border-top-color: blue;}\n"
+	"#T { color: Green;}\n"
+	"#O { color: Brown;}"
+     "</style>"
+    )
+
+[GenerateErrProbs]
+ Do(XML::"html" Echo() Do(XML::head Echo([Styles])) XML::"body"
+    Echo(XML::"h2" XML::"a name='CommandIntro'" "Common V4 Errors and Problems")
+    [[Chapter:ErrsProbs Thread] GenerateThread]
+   )
+
+[GenerateCommandIntro]
+ Do(XML::"html" Echo() Do(XML::head Echo([Styles])) XML::"body"
+    Echo(XML::"h2" XML::"a name='CommandIntro'" "V4 Interpreter Command Introduction")
+    [[Chapter:Commands Thread] GenerateThread]
+   )
+[GenerateCommandList]
+ Do(
+
+
+    XML::"ul id='foldinglist' style='display:none'"
+    Tally(Cmd.. (Count::1 By::Str(Cmd.Name Head::1) Bind::CmdAlphaCount))
+    Enum(Str("ABCDEFGHIJKLMNOPQRSTUVWXYZ" Begin::Int* Length::1)/Int:1..26 If::{[CmdAlphaCount],0 > 0}
+     @Do(
+         Echo(XML::"li id='foldheader'" "-" Alpha* "-" )
+	 Do(XML::"ul id='foldinglist' style='display:none'"
+	    Enum(Sort(Cmd.. By::Str(Cmd.Name UC?) If::Str(Cmd.Name Head::Alpha*))
+		@Echo(XML::"li" XML::Cmd.Bookmark "<nobr><b>" Cmd.Name "</b> - <i>" Cmd.Desc "</nobr></i>"))
+	)))
+   )
+
+[GenerateFuncCommandList]
+ Do(Tally(Cmd.. (Values::CmdFuncCat:=NId*/Cmd.Categories ListOf::Cmd* By::CmdFuncCat* Bind::CModList))
+    XML::"ul id='foldinglist' style='display:none'"
+    Enum(Sort(CmdFuncCat.. By::CmdFuncCat*)
+     @Do(
+         Echo(XML::"li id='foldheader'" "<nobr>" CmdFuncCat.Desc "</nobr>")
+	 Do(XML::"ul id='foldinglist' style='display:none'"
+	    Enum(Sort([CModList],() By::Str(Cmd.Name UC?))
+		@Echo(XML::"li" XML::Cmd.Bookmark "<nobr><b>" Cmd.Name "</b> <i> - " Cmd.Desc "</nobr></i>"))
+	)))
+   )
+[Cmd.. Bookmark]
+ Str("a href='v4refcommands.htm#Command:" Cmd.Name "' title='" Cmd.Desc "'")
+
+[GenerateCommands]
+ Do(XML::"html" Echo()  Do(XML::head Echo([Styles])) XML::"body"
+    Tally(CUsage.. (ListOf::CUsage* By::CUsage.Cmd Bind::CmdUsageList))
+    Tally(Params.. If::DefQ(Params.Cmd) (ListOf::Params* By::Params.Cmd Bind::CmdParamList))
+    Tally(Opt..
+     Do::[IndexEntry IEType:Option IEntry:=Opt.Name BookMark:=Str(Output(Data?) "#Command:" Opt.Cmd.Name) SubEntry:=Opt.Cmd.Name SEType:Command]
+     (ListOf::Opt* By::Opt.Thread Bind::ThreadOptList))
+    Enum(Sort(Cmd.. By::Str(Cmd.Name UC?))
+        (Echo(XML::Str("a name='Command:" Cmd.Name "'"))
+        If(Str(Cmd.Name Has::" ")
+	 Then::[IndexEntry IEType:Command IEntry:=Str(Cmd.Name Before::" ") BookMark:=Str(Output(Data?) "#Command:" Cmd.Name) SubEntry:=Str(Cmd.Name After::" ") SEType:Command]
+	 Else::[IndexEntry IEType:Command IEntry:=Cmd.Name BookMark:=Str(Output(Data?) "#Command:" Cmd.Name)])
+        Echo("<p Id='Section'>" Cmd.Name " - " Cmd.Desc "</p>")
+	If(DefQ([CmdUsageList]) Then::[GenerateCmdUsage])
+	If(DefQ([CmdParamList]) Then::[GenerateCmdParameters])
+	[GenerateCmdDescription] [GenerateCmdExamples]
+       ))
+   )
+
+[GenerateThreadOptions Thread..]
+ Do(XML::"table width='100%'"
+    Enum(Sort([ThreadOptList] By::Str(Opt.Name UC?))
+     @Do(XML::"tr"
+	Echo(XML::"td width='5%'" "&nbsp;")
+	Echo(XML::"td valign='top' width='15%'" XML::"b" XML::"font Id='O'" Opt.Name)
+	Echo(XML::"td valign='top' width='10%'" XML::"i" Opt.Argument)
+	Echo(XML::"td width='70%'" Opt.LText.LTextToText) ))
+   )
+
+[GenerateCmdUsage]
+ Do(Echo(XML::"h4 style='margin-bottom: 0'" "Usage")
+    Do(XML::"table width='100%'"
+       Enum([CmdUsageList]
+	@Do(XML::"tr"
+	    Echo(XML::"td width='5%'" "&nbsp;")
+	    Echo(XML::"td width='95%'" "<b>" CUsage.CmdName "</b>&nbsp;" CUsage.ArgPrefix "<i>" CUsage.Arguments "</i>" CUsage.ArgSuffix) )
+	))
+   )
+
+[GenerateCmdParameters]
+ Do(Echo(XML::"h4 style='margin-bottom: 0'" "Parameters")
+    Do(XML::"table width='100%'"
+       Enum([CmdParamList]
+	@Do(XML::"tr"
+	    Echo(XML::"td width='5%'" "&nbsp;")
+	    Echo(XML::"td width='20%'" XML::"i" Params.Name)
+	    Echo(XML::"td width='75%'" Params.LText.LTextToText) ))
+      )
+   )
+
+[GenerateCmdDescription]
+ Do(Echo(XML::"h4 style='margin-bottom: 0'" "Description") Cmd.DescThread.GenerateThread )
+
+[GenerateCmdExamples]
+ Do(If(DefQ(Cmd.ExampleThread)
+     Then::Do(Echo(XML::"h4 style='margin-bottom: 0'" "Examples") Cmd.ExampleThread.GenerateThread))
+   )
+
+[AutoSize Alpha.. Int..] If({Str(Alpha* Length?) >= Int*} Then::Str("<font size=-1>" Alpha* "</font>") Else::Alpha*)
+[GenerateAlphaModList]
+ Do(
+    XML::"ul id='foldinglist' style='display:none'"
+    Tally(Mod.. (Count::1 By::Str(Mod.Name UC? Head::1) Bind::AlphaCount))
+    Enum(Str("ABCDEFGHIJKLMNOPQRSTUVWXYZ" Begin::Int* Length::1)/Int:1..26 If::{[AlphaCount],0 > 0}
+     @Do(
+         Echo(XML::"li id='foldheader'" "-" Alpha* "-" )
+	 Do(XML::"ul id='foldinglist' style='display:none'"
+	    Enum(Sort(Mod.. By::Str(Mod.Name UC?) If::{Str(Mod.Name IC? Head::Alpha*) & ~Str(Mod.Name Head::("Fin" "Stat"))})
+		@Echo(XML::"li" XML::Mod.BookMark "<nobr><b>" Mod.Name "</b> - <i>" Mod.Desc "</i></nobr>")))
+         If({Alpha* = "F"}
+	  Then::Do(Echo(XML::"li id='foldheader'" "-Financial-" )
+		   Do(XML::"ul id='foldinglist' style='display:none'"
+		      Enum(Sort(Mod.. By::Str(Mod.Name UC?) If::Str(Mod.Name Head::"Fin"))
+			@Echo(XML::"li" XML::Mod.BookMark "<nobr><b>" Mod.Name "</b> - <i>" Mod.Desc "</i></nobr>"))
+		  )))
+         If({Alpha* = "S"}
+	  Then::Do(Echo(XML::"li id='foldheader'" "-Statistical-" )
+		   Do(XML::"ul id='foldinglist' style='display:none'"
+		      Enum(Sort(Mod.. By::Str(Mod.Name UC?) If::Str(Mod.Name Head::"Stat"))
+			@Echo(XML::"li" XML::Mod.BookMark "<nobr><b>" Mod.Name "</b> - <i>" Mod.Desc "</i></nobr>"))
+		  )))
+	))
+   )
+
+[GenerateFuncDPTList]
+ Do(Tally(DPT.. (Values::DPTFuncCat:=NId*/DPT.Categories ListOf::DPT* By::DPTFuncCat* Bind::DPTList))
+    XML::"ul id='foldinglist' style='display:none'"
+    Enum(Sort(DPTFuncCat.. By::DPTFuncCat*)
+     @Do(
+         Echo(XML::"li id='foldheader'" "<nobr>" DPTFuncCat.Desc,DPTFuncCat* "</nobr>")
+	 Do(XML::"ul id='foldinglist' style='display:none'"
+	    Enum(Sort([DPTList],() By::Str(DPT.Name UC?))
+		@Echo(XML::"li" XML::Str("a href='v4refdimtype.htm#PntType:" DPT.Name "'") "<nobr><b>" DPT.Name "</b> - <i>" DPT.Desc "</i></nobr>"))
+	)))
+   )
+
+[GenerateAlphaDPTList]
+ Do(
+     XML::"ul id='foldinglist' style='display:none'"
+    Tally(DPT.. (Count::1 By::Str(DPT.Name Head::1) Bind::DPTAlphaCount))
+    Enum(Str("ABCDEFGHIJKLMNOPQRSTUVWXYZ" Begin::Int* Length::1)/Int:1..26 If::{[DPTAlphaCount],0 > 0}
+     @Do(
+         Echo(XML::"li id='foldheader'" "-" Alpha* "-" )
+	 Do(XML::"ul id='foldinglist' style='display:none'"
+	    Enum(Sort(DPT.. By::Str(DPT.Name UC?) If::Str(DPT.Name Head::Alpha*))
+		@Echo(XML::"li" XML::Str("a href='v4refdimtype.htm#PntType:" DPT.Name "'") "<nobr><b>" DPT.Name "</b> - <i>" DPT.Desc "</i></nobr>"))
+	)))
+   )
+
+
+[GenerateDPT]
+ Do(XML::"html" Echo()  Do(XML::head Echo([Styles])) XML::"body"
+    Tally(DPTSyn.. (ListOf::DPTSyn* By::DPTSyn.DPT Bind::DPTSynList))
+    Enum(Sort(DPT.. By::Str(DPT.Name UC?))
+       (Echo(XML::Str("a name='PntType:" DPT.Name "'"))
+	[IndexEntry IEType:DPT IEntry:=DPT.Name BookMark:=Str("v4refdimtype.htm#PntType:" DPT.Name)]
+        Echo("<p Id='Section'>" DPT.Name " - " DPT.Desc "</p>")
+	DPT.IntroThread.GenerateThread [GenerateDPTSyntax] [GenerateDPTDescription] [GenerateDPTExamples]
+       ))
+   )
+
+
+[GenerateDPTSyntax]
+ Do(Echo(XML::"h4 style='margin-bottom: 0'" "Dimension Declaration")
+    If(DefQ([DimDcl])
+     Then::Do(Echo("Dimension <i>name</i> " DPT.DimDcl.LTextToText))
+     Else::Do(Echo("Dimension <i>name</i> " DPT.Name)))
+    Echo(XML::"h4 style='margin-bottom: 0'" "Value Syntax")
+    If(DefQ([DPTSynList])
+     Then::Do(XML::"table"
+	      Enum([DPTSynList]
+	       @Do(XML::"tr" Echo(XML::"td width=10")
+		   Echo(XML::"td" XML::"p align=center" DPTSyn.Spec.LTextToText) Echo(XML::"td width=5")
+		   Echo(XML::"td" DPTSyn.Desc.LTextToText)))
+	     ))
+    DPT.SyntaxThread.GenerateThread,""
+   )
+
+[GenerateDPTDescription]
+ Do(Echo(XML::"h4 style='margin-bottom: 0'" "Description") DPT.DescThread.GenerateThread,"")
+
+[GenerateDPTExamples]
+ Do(Echo(XML::"h4 style='margin-bottom: 0'" "Examples") DPT.ExampleThread.GenerateThread,"")
+
+[GenerateFuncOverview]
+ Do(Tally(Mod.. (Values::FuncCat:=NId*/Mod.Categories ListOf::Mod* By::FuncCat* Bind::ModList))
+    XML::"ul id='foldinglist' style='display:none'"
+    Enum(Sort(FuncCat.. By::FuncCat*)
+     @Do(
+         Echo(XML::"li id='foldheader'" "<nobr>" FuncCat.Desc "</nobr>")
+	 Do(XML::"ul id='foldinglist' style='display:none'"
+	    Enum(Sort([ModList],() By::Str(Mod.Name UC?))
+		@Echo(XML::"li" XML::Mod.BookMark "<nobr><b>" Mod.Name "</b> - <i>" Mod.Desc "</i></nobr>"))
+	)))
+   )
+
+[BookMark Mod..]
+! Str("a href='" If(Str(Mod.Name Head::("Fin" "Stat")) Then::"v4refmodFinStat" Else::"v4refmodules") ".htm#IntMod:" Mod.Name "'"
+!	" title='" Mod.Desc "'")
+ Str("a href='" [modHTMLFile Mod.Name] "#IntMod:" Mod.Name "'" " title='" Mod.Desc "'")
+[GenerateModules]
+ Do(Tally(Usage.. (ListOf::Usage* By::Usage.Mod Bind::ModUsageList))
+    Tally(Params.. If::DefQ(Params.Mod) (ListOf::Params* By::Params.Mod Bind::ModParamList))
+    Tally(TagArg.. (ListOf::TagArg* By::TagArg.Mod Bind::TagArgList))
+    Tally(TagResArg.. (ListOf::TagResArg* By::TagResArg.Mod Bind::TagResArgList)),0
+    Tally(Tag2Arg.. (ListOf::Tag2Arg* By::Tag2Arg.Mod Bind::Tag2ArgList))
+    Tally(Tag2ResArg.. (ListOf::Tag2ResArg* By::Tag2ResArg.Mod Bind::Tag2ResArgList)),0
+    Enum(Sort(Mod.. By::Str(Mod.Name UC?))
+       (
+!        If(Str(Mod.Name Head::("Fin" "Stat"))
+!	  Then::Do(Context(File:"v4refModFinStat.htm") Output(To::Data Id::FinStat))
+!	  Else::Do(Context(File:"v4refModules.htm") Output(To::Data Id::Modules))
+!	  )
+	Output(To::Data Id::Mod.modOutId) Context(File:=[modHTMLFile Alpha:=Mod.Name])
+        Echo(XML::Str("a name='IntMod:" Mod.Name "'"))
+        [IndexEntry IEType:Module IEntry:=Mod.Name BookMark:=Str(Output(Data?) "#IntMod:" Mod.Name)]
+        Enum([ModUsageList] If::DefQ(Usage.XName) @Echo(XML::Str("a name='IntMod:" Usage.XName "'")))
+	Echo("<p Id='Section'>" Mod.Name " - " Mod.Desc "</p>")
+	[GenerateModUsage] [GenerateModParameters]
+	If(DefQ([TagArgList]) Then::[GenerateTag])
+	If(DefQ([TagResArgList]) Then::[GenerateTagRes])
+	If(DefQ([Tag2ArgList]) Then::[GenerateTag2])
+	If(DefQ([Tag2ResArgList]) Then::[GenerateTag2Res])
+	[GenerateModDescription] [GenerateModExamples]
+       ))
+   )
+
+[GenerateModUsage]
+ Do(Echo(XML::"h4 style='margin-bottom: 0'" "Usage")
+    Do(XML::"table width='100%'"
+       Enum([ModUsageList]
+	@Do(XML::"tr"
+	    Echo(XML::"td width='5%'" "&nbsp;")
+	    Echo(XML::"td width='95%'" "<i>" Usage.Result "</i> = <font id=I>" DefQ(Usage.XName Then::Usage.XName Else::Mod.Name) "</font>&nbsp;( <i>" List(Usage.Arguments Column::" ") "</i> )") )
+	))
+   )
+
+[GenerateModParameters]
+ Do(Echo(XML::"h4 style='margin-bottom: 0'" "Parameters")
+    Do(XML::"table width='100%'"
+       Enum([ModParamList]
+	@Do(XML::"tr"
+	    Echo(XML::"td width='5%'" "&nbsp;")
+	    Echo(XML::"td width='20%'" XML::"i" Params.Name)
+	    Echo(XML::"td width='75%'" Params.LText.LTextToText) ))
+      )
+   )
+
+
+[GenerateModDescription]
+ Do(Echo(XML::"h4 style='margin-bottom: 0'" "Description") Mod.DescThread.GenerateThread)
+
+[GenerateModExamples]
+ Do(If(DefQ(Mod.ExampleThread)
+     Then::Do(Echo(XML::"h4 style='margin-bottom: 0'" "Examples") Mod.ExampleThread.GenerateThread))
+   )
+
+[GenerateThread Thread..]
+ Enum(Int:1..1000 While::DefQ(Thread.Type)
+    (TEQ(Thread.Type
+	Heading	Echo(XML::"h4 style='margin-bottom: 0'" Thread.Heading)
+	IPar	Echo(XML::"p style='text-indent: 5'" Thread.LText.LTextToText)
+	List	Do(Context(Thread.ListType) Echo(If({ListType* = ListType:Dot} Then::"<ul>" Else::"<ol>")))
+	EndList	Echo(If({ListType* = ListType:Dot} Then::"</ul>" Else::"</ol>"))
+	Entry	Echo(XML::"li" Thread.LText.LTextToText)
+	Par	Echo(XML::"p" Thread.LText.LTextToText)
+	Tbl	Thread.Tbl.GenerateTable
+	Section	Do(If({Str(Thread.BookMark Length?),0 > 0} Then::Echo(XML::Str("a name='" Thread.BookMark "'")))
+		   Echo(XML::Str("a name='Section" Thread.SectionId "'") XML::"h4" Thread.Name)
+		  )
+	EXML	Thread.EXML.GenerateEXML
+	EX	Do(If({Thread.PriorThread.Type,xx <> EX}
+		    Then::Echo("<table width='100%'><tr><td width='5%'>&nbsp;</td><td width='95%'><font size='-1' face='Arial Narrow'>"))
+		   Echo(Thread.Text '<br>')
+		   If({Thread.NextThread.Type,xx <> EX} Then::Echo("</font></td></tr></table>"))
+		  )
+	SUS	Do([IndexEntry IEType:Other IEntry:"Startup" BookMark:=Str(Output(Data?) "#StartupSwitches")]
+		   XML::"table width='100%'"
+		   Enum(SUS..
+		    @Do(XML::tr Echo(XML::"td width='5%'")
+			If({SUS.Switch <> "%"} Then::[IndexEntry IEType:Switch IEntry:=SUS.Switch BookMark:=Str(Output(Data?) "#StartupSwitches")]
+			 Else::[IndexEntry IEType:General IEntry:"punctuation" BookMark:=Str(Output(Data?) "#StartupSwitches")  SubEntry:=SUS.Switch SEType:Switch])
+			Echo(XML::"td width='10%'" "-" SUS.Switch)
+			Echo(XML::"td width='15%'" "<i>" SUS.Params "</i>")
+			Echo(XML::"td width='75%'" SUS.LText.LTextToText)))
+		  )
+	EXWD	Do(If({Thread.PriorThread.Type,xx <> EXWD}  Then::Echo("<table width='100%'>"))
+		   Do(XML::"tr"
+		      Echo(XML::"td width='5%'" "&nbsp;")
+		      Echo(XML::"td width='50%'" XML::"font size='-1' face='Arial Narrow'" Thread.Text)
+		      Echo(XML::"td width='45%'" XML::"font size='-1' face='Arial Narrow'" XML::"i" Thread.Desc))
+		   If({Thread.NextThread.Type,xx <> EXWD} Then::Echo("</table>"))
+		  )
+		Echo(XML::"p" "?Unknown Thread.Type(" Thread.Type "): " Thread.Text))
+     If(DefQ(Thread.NextThread.ThreadOptList) Then::Thread.NextThread.GenerateThreadOptions)
+!    If(DefQ(Thread.NextThread.Type) Then::Thread.NextThread.GenerateThread)
+     ContextL(Thread.NextThread)
+   ))
+
+[GenerateTag]
+ Do(Echo(XML::"h4 style='margin-bottom: 0'" "Tagged Arguments")
+    XML::"table width='100%'"
+    Enum(Sort([TagArgList] By::Str(TagArg.Tag UC?))
+     @Do(XML::"tr"
+	 [IndexEntry IEType:Tag IEntry:=TagArg.Tag BookMark:=Str(Output(Data?) "#IntMod:" Mod.Name) SubEntry:=Mod.Name SEType:Module]
+	 Echo(XML::"td width='5%'" "&nbsp;")
+	 Echo(XML::"td valign='top' width='20%'" "<font id=T>" TagArg.Tag  "</font>::" XML::"i" TagArg.Argument)
+	 Echo(XML::"td width='75%'" TagArg.LText.LTextToText)))
+   )
+
+[GenerateTagRes]
+ Do(Echo(XML::"h4 style='margin-bottom: 0'" "Tagged Results")
+    XML::"table width='100%'"
+    Enum(Sort([TagResArgList] By::Str(TagResArg.Tag UC?))
+     @Do(XML::"tr"
+	 [IndexEntry IEType:Tag IEntry:=Str(TagResArg.Tag "?") BookMark:=Str(Output(Data?) "#IntMod:" Mod.Name) SubEntry:=Mod.Name SEType:Module]
+	 Echo(XML::"td width='5%'" "&nbsp;")
+	 Echo(XML::"td valign='top' width='20%'" "<font id=T>" TagResArg.Tag "</font>?")
+	 Echo(XML::"td width='75%'" TagResArg.LText.LTextToText)))
+   )
+
+[GenerateTag2]
+ Do(Echo(XML::"h4 style='margin-bottom: 0'" "Secondary Tagged Arguments")
+    XML::"table width='100%'"
+    Enum(Sort([Tag2ArgList] By::Str(Tag2Arg.Tag2 UC?))
+     @Do(XML::"tr"
+	 [IndexEntry IEType:Tag IEntry:=Tag2Arg.Tag2 BookMark:=Str(Output(Data?) "#IntMod:" Mod.Name) SubEntry:=Mod.Name SEType:Module]
+	 Echo(XML::"td width='5%'" "&nbsp;")
+	 Echo(XML::"td width='20%'" "<font id=T>" Tag2Arg.Tag2 "</font>::" XML::"i" Tag2Arg.Argument)
+	 Echo(XML::"td width='75%'" Tag2Arg.LText.LTextToText)))
+   )
+
+[GenerateTag2Res]
+ Do(Echo(XML::"h4 style='margin-bottom: 0'" "Secondary Tagged Results")
+    XML::"table width='100%'"
+    Enum(Sort([Tag2ResArgList] By::Str(Tag2ResArg.Tag2 UC?))
+     @Do(XML::"tr"
+	 Echo(XML::"td width='5%'" "&nbsp;")
+	 Echo(XML::"td width='20%'" "<font id=T>" Tag2ResArg.Tag2 "</font>?")
+	 Echo(XML::"td width='75%'" Tag2ResArg.LText.LTextToText)))
+   )
+
+Dim TES Shell
+[Tbl.. GenerateTable]
+ Do(XML::"div align='center'" XML::"center"
+    BindQE([Tbl* File] File*)		/* Remember current file for list-of-tables in TOC outline */
+    Echo(XML::Str("a name='V4Table" Tbl* "'"))
+    Echo(XML::"p" "Table " Tbl* " - " Tbl.Name)
+    XML::Str("table " If(Str(Tbl.Background Has::"none") Then::"" Else::Str("bgcolor='" Tbl.Background "'")) If({Tbl.pcWidth > 0} Then::Str(" width='" Tbl.pcWidth "%'")))
+    Enum(TE.. If::{TE.Table = Tbl*}
+	@Do(XML::"tr"
+	    Enum(TE.Row Shell::Dim:TES @Echo(XML::"td valign='top'" [LTextToText MakeL(TES*)]))
+	))
+   )
+
+Dim EXMLNum Int
+[EXML.. GenerateEXML]
+ Do(DefQ(EXMLNum* @Context(EXMLNum:0)) Context({EXMLNum* + 1}) BindQE([EXML* Number] EXMLNum*)
+    BindQE([EXML* File] File*) 
+    Echo(XML::"p" XML::Str("a name='V4Example" EXML.Number "'") XML::h5 "Example " EXMLNum* " - " EXML.LText.LTextToText)
+    XML::Str("table width='100%'")
+    XML::"tr" 
+    Echo(XML::"td width='5%'" "&nbsp;")
+    Do(XML::"td width='95%'"
+       If(Enum(ML.. If::{ML.EXML = EXML* & Str(ML.Desc Length?) > 0} Then::Logical:True),Logical:False
+        Then::Do(XML::"table width='100%' border='0'"
+		 Enum(ML.. If::{ML.EXML = EXML*}
+		   @Do(XML::tr Echo(XML::"td width='50%'" XML::"font size='-1' face='Arial Narrow'" ML.Line) Echo(XML::"td"  XML::"font size='-1' face='Arial Narrow'"XML::"i" ML.Desc)))
+		)
+        Else::Enum(ML.. If::{ML.EXML = EXML*} @Echo(XML::"font size='-1' face='Arial Narrow'" ML.Line "<br>"))
+       ))
+   )
+
+[GenerateEXMLList]
+ Do(XML::"ul id='foldinglist' style='display:none'"
+    Enum(EXML..
+	@Echo(XML::"li" XML::Str("a href='" EXML.File "#V4Example" EXML.Number "' title='" Str(EXML.LText.LTextToText Replace::"'" Num? With::"") "'") "<nobr>" EXML.LText.LTextToText "</nobr>"))
+   )
+
+[GenerateTblList]
+ Do(XML::"ul id='foldinglist' style='display:none'"
+    Enum(Tbl..
+	@Echo(XML::"li" XML::Str("a href='" Tbl.File "#V4Table" Tbl* "' title='" Str(Tbl.Name Replace::"'" Num? With::"") "'") "<nobr>" Tbl.Name "</nobr>"))
+   )
+
+[GenerateConceptsIntro]
+ Do(XML::"html" Echo()  Do(XML::head Echo([Styles])) XML::"body"
+    Echo(XML::"h2" XML::"a name='ConceptsIntro'" "V4 Concepts Introduction")
+    [[Chapter:Concepts Thread] GenerateThread]
+    [[Chapter:Syntax Thread] GenerateThread]
+    [[Chapter:Advanced Thread] GenerateThread]
+    [[Chapter:UV4Points Thread] GenerateThread]
+    Echo(XML::"h2" XML::"a name='PointSpecSum'" "V4 Point Specification Summary")
+    XML::"table width='100%'"
+    Enum(PSpec..
+     @Echo(XML::tr "<td width='25%'>" PSpec.Spec "</td><td width='75%'>" PSpec.LText.LTextToText "</td>"))
+    [IndexEntry IEType:general IEntry:"Punctuation Syntax" BookMark:=Str(Output(Data?) "#PointSpecSum")]
+   )
+
+[GenerateConceptsList Chapter..]
+ Do(ContextL(Chapter.Thread)
+    XML::"ul id='foldinglist' style='display:none'"
+    Enum(Int:1..1000 While::DefQ(Thread.Type)
+     (If({Thread.Type = Section}
+       Then::Echo(XML::"li" XML::Str("a href='v4refconcepts.htm#Section" Thread.SectionId "' title='" Str(Thread.Name Replace::"'" Num? With::"") "'") "<nobr>" Thread.Name "</nobr>"))
+      ContextL(Thread.NextThread)
+     )
+   ))
+
+
+[GenerateStartupSwitches]
+ Do(XML::"html" Echo()  Do(XML::head Echo([Styles])) XML::"body"
+    Echo(XML::"h2" XML::"a name='StartupSwitches'" "xv4 Startup Switches")
+    [[Chapter:StartupSwitches Thread] GenerateThread]
+   )
+
+[V4RefTableOfContents]
+ Do(
+    Echo(Include::"v4reftocheader.htm")
+    Echo("Table&nbsp;of&nbsp;Contents")
+    Do(XML::"ul"
+       Echo(XML::"li id='foldheader'" "Concepts")
+       Do(XML::"ul id='foldinglist' style='display:none'"
+          Echo(XML::"li id='foldheader'" "V4 Introduction") [GenerateConceptsList Chapter:Concepts]
+          Echo(XML::"li id='foldheader'" "Basic Syntax") [GenerateConceptsList Chapter:Syntax]
+	  Echo(XML::"li style='list-style-type:none;'" XML::"a href='v4refconcepts.htm#PointSpecSum'" "<nobr>Point Specification Summary</nobr>")
+          Echo(XML::"li id='foldheader'" "<nobr>Advanced V4 Concepts</nobr>") [GenerateConceptsList Chapter:Advanced]
+          Echo(XML::"li id='foldheader'" "<nobr>UV4 Points</nobr>") [GenerateConceptsList Chapter:UV4Points]
+	  Echo(XML::"li id='foldheader'" "Commands") [GenerateConceptsList Chapter:Commands]
+         )
+       Echo(XML::"li id='foldheader'" "Dimension&nbsp;Types&nbsp;<i>Alphabetical</i>")
+       [GenerateAlphaDPTList]
+       Echo(XML::"li id='foldheader'" "Dimension&nbsp;Types&nbsp;<i>Functional</i>")
+       [GenerateFuncDPTList]
+       Echo(XML::"li id='foldheader'" "Commands&nbsp;<i>Alphabetical</i>")
+       [GenerateCommandList]
+       Echo(XML::"li id='foldheader'" "Commands&nbsp;<i>Functional</i>")
+       [GenerateFuncCommandList]
+       Echo(XML::"li id='foldheader'" "Modules&nbsp;<i>Alphabetical</i>")
+       [GenerateAlphaModList]
+       Echo(XML::"li id='foldheader'" "Modules&nbsp;<i>Functional</i>")
+       [GenerateFuncOverview]
+!       Echo(XML::"li style='list-style-type:none;'" XML::"a href='v4refConcepts.htm'" "xv4&nbsp;Startup")
+       Echo(XML::"li id='foldheader'" "<nobr>Running V4</nobr>") [GenerateConceptsList Chapter:StartupSwitches]
+       Echo(XML::"li id='foldheader'" "<nobr>List of Examples</nobr>")
+       [GenerateEXMLList]
+       Echo(XML::"li id='foldheader'" "<nobr>List of Tables</nobr>")
+       [GenerateTblList]
+       Echo(XML::"li id='foldheader'" "<nobr>Common V4 Errors and Problems</nobr>")
+       [GenerateConceptsList Chapter:ErrsProbs]
+       Echo(XML::"li style='list-style-type:none;'" XML::"a href='v4refindex.htm'" "Index")
+     )
+
+    Echo("</body></html>")
+   )
+
+[IndexEntry IEType.. IEntry.. BookMark..]
+ Do(Context(Index+) BindQE(Index.IEntry IEntry*) BindQE(Index.BookMark BookMark*) BindQE(Index.IEType IEType*))
+[IndexEntry IEType.. IEntry.. BookMark.. SubEntry.. SEType..]
+ Do(Context(Index+) BindQE(Index.IEntry IEntry*) BindQE(Index.BookMark BookMark*) BindQE(Index.SubEntry SubEntry*)
+    BindQE(Index.IEType IEType*) BindQE(Index.SEType SEType*))
+[IEType.. Format Alpha..]
+ TEQ(IEType*
+	IEType:Command		Str("<font id=C>" Alpha* "</font>")
+	IEType:Tag		Str("<font id=T>" Alpha* "</font>")
+	IEType:Module		Str("<font id=I>" Alpha* "</font>")
+	IEType:DPT		Str("<font id=D>" Alpha* "</font>")
+	IEType:Switch		Str("<font id=S>-" Alpha* "</font>")
+	IEType:Option		Str("<font id=O>" Alpha* "</font>")
+				Alpha*
+    )
+Dim Row Int Range Bind 5
+Dim Col,ColTot Int Range
+Dim LetterCont Logical		Desc "True if OK to continue Letter into next column"
+Dim IEbyType Dict Bind 5	Desc "Index entry by type represented as: entry-type"
+[IndexColMax] 7
+[GenerateIndex]
+ Do(XML::html Echo() Echo(XML::header) XML::body
+    Do(XML::header
+       XML::style
+        Echo("<!--")
+	Echo("a:link { color:black; text-decoration: none; }")
+	Echo("a:hover { color:black; text-decoration: underline;}")
+	Echo("a:visited { color:black; text-decoration: none; }")
+	Echo("#I { color: Blue;}")
+	Echo("#T { color: Green;}")
+	Echo("#C { color: Red;}")
+	Echo("#O { color: Brown;}")
+	Echo("#D { color: Purple;}")
+	Echo("#S { color: Gold;}")
+	Echo("-->")
+      )
+    Tally(Index..
+	(SetOf::IEbyType:=Str(Index.IEntry "-" Index.IEType) By::Str(Index.IEntry UC? Head::1) ByList::LetterList Bind::IEbyTypeList)
+	(Count::1 By::Str(Index.IEntry UC? Head::1) Bind::IndexEntriesPerLetter)
+	(ListOf::Index* By::IEbyType:=Str(Index.IEntry "-" Index.IEType) ByList::IEbyTypeList1 Bind::IndexList))
+    Tally([IEbyTypeList1] (Count::1 Bind::MultEntries If::{ListSize([IndexList]) > 1}))
+    BindQE([ColLength] {(ListSize(Index..) + 26 + [MultEntries]) / [IndexColMax]})
+
+    Context(Row:0 Col:1 ColTot:0)
+    Enum(Sort([LetterList] By::Alpha*)
+      (BindQE([Context({Row* + 1}) Col* Value] Str("<td align='center' bgcolor='#D0D0D0' onclick='location.href=\"#Index\"'>- <b><a name='Index:" Alpha* "'>" Alpha* "</b> -</td>")) Context({ColTot* + 1})
+       Context(LetterCont:={[IndexEntriesPerLetter] + ColTot* > [ColLength] + 10})
+       Enum(Sort([IEbyTypeList] By::Str(IEbyType* UC?))
+         @If({ListSize([IndexList]) = 1}
+	   Then::Do(Context(List([IndexList] Nth::1) {ColTot* + 1})
+		    BindQE([Context({Row* + 1}) Col* Value] Str("<td><a href='" Index.BookMark "'>" [Index.IEType Alpha:=Index.IEntry Format] "</a></td>" ))
+		    If({LetterCont* & ColTot* >= [ColLength]}
+		     Then::Do(Context(Row:0 {Col* + 1} ColTot:0)
+				 BindQE([Context({Row* + 1}) Col* Value] Str("<td align='center' bgcolor='#D0D0D0'>- <b>" Alpha* "</b>(<i> con't</i>) -</td>"))
+				 Context({ColTot* + 1})))
+		   )
+	   Else::Do(BindQE([Context({Row* + 1}) Col* Value] Str("<td><i>" [Format Alpha:=Str(IEbyType* Before::"-") IEType:=Str(IEbyType* After::"-")] "</i></td>")) Context({ColTot* + 1})
+		    Context({ListSize([IndexList]) + ColTot* > [ColLength] + 10})
+		    Enum(Sort([IndexList] By::Str(Index.SubEntry,"" UC?))
+		      (BindQE([Context({Row* + 1}) Col* Value]
+			Str("<td>&nbsp;&nbsp;<a href='" Index.BookMark "'>"
+				 [IEType:=Index.SEType Alpha:=If({Str(Index.SubEntry Length?) > 0} Then::Index.SubEntry Else::NOp(0)) Format],
+				    [Index.IEType Alpha:=Index.IEntry Format] "</a></td>" ))
+		       Context({ColTot* + 1})
+		       If({Logical* & (ColTot* >= [ColLength])}
+		        Then::Do(Context(Row:0 {Col* + 1} ColTot:0)
+				 BindQE([Context({Row* + 1}) Col* Value] Str("<td align='center' bgcolor='#D0D0D0'>" [Format Alpha:=Str(IEbyType* Before::"-") IEType:=Str(IEbyType* After::"-")] " (<i> con't</i>)</td>"))
+				 Context({ColTot* + 1})))
+		      )
+		   ))
+	   ))
+       If({ColTot* + 5 >= [ColLength]} Then::Context(Row:0 {Col* + 1} ColTot:0))
+      ))
+    Echo(XML::"h2" XML::"a name='Index'" "Index")
+    Echo(XML::p `EnumCL(Sort([LetterList] By::Alpha*) @Str("<a href=#Index:" Alpha* ">" Alpha* "</a>&nbsp;&nbsp;")))
+    Echo(XML::p "Legend:&nbsp;" [Format "Command" IEType:Command] "&nbsp;" [Format "Command-Option" IEType:Option] "&nbsp;" [Format "Dimension" IEType:DPT] "&nbsp;" [Format "Module" IEType:Module] "&nbsp;"
+	 [Format "Switch" IEType:Switch] "&nbsp;" [Format "Tag" IEType:Tag] "&nbsp;&nbsp;&nbsp;(click on -<i>letter</i>- to return to top of page)")
+    XML::"table border='0' align='center'"
+    Enum(Row:1..100000 While::Or(DefQ([Value])/Num(Col:1 Num::[IndexColMax]))
+     @Do(XML::tr Enum(Num(Col:1 Num::[IndexColMax]) @Echo([Value],"<td>&nbsp;</td>"))))
+    Echo(XML::tr XML::Str("td bgcolor='#D0D0D0' align='center' onclick='location.href=\"#Index\"' colspan='" [IndexColMax] "'") "<i>click for top of index</i>")
+   )
+
+If TRUE
+Set Echo
+Include v4refbasics.v4d Table Doc Continued
+Include v4refdimtype.v4d Table Doc Continued
+Include v4refcommand.v4d Table Doc Continued
+Include v4refintmod.v4d Table Doc Continued
+!Set Trace Log 106000
+Eval Do(Context(Mod:0)
+	Output(Create::Context(File:"v4refConcepts.htm") To::Data)
+	  [GenerateConceptsIntro] [GenerateCommandIntro] [GenerateErrProbs] [GenerateStartupSwitches]
+	Output(Close::Data)
+	Output(Create::Context(File:"v4refDimType.htm") To::Data) [GenerateDPT] Output(Close::Data)
+	Output(Create::Context(File:"v4refCommands.htm") To::Data) [GenerateCommands] Output(Close::Data)
+	Enum(EnumCL(Mod.. SetOf? @Str(Mod.Name UC? Head::1))
+	 @Do(Output(Create::Str("v4RefMod_" Alpha* ".htm") Id::NId:=Alpha*)
+	     Echo(Out::NId:=Alpha* "<html>\n\n<head>" [Styles] "</head><body>\n")
+	    ))
+!	Output(Create::"v4refModules.htm" Id::Modules) Output(Create::"v4refModFinStat.htm" Id::FinStat)
+!		Echo(Out::Modules "<html>\n\n<head>" [Styles] "</head><body>\n")
+!		Echo(Out::FinStat "<html>\n\n<head>" [Styles] "</head><body>\n")
+	  [GenerateModules]
+!		Echo(Out::Modules "</body>\n</html>")
+!		Echo(Out::FinStat "</body>\n</html>")
+!	  Output(Close::Data)
+	Enum(EnumCL(Mod.. SetOf? @Str(Mod.Name UC? Head::1))
+	 @Do(Echo(Out::NId:=Alpha* "</body>\n</html>")
+	     Output(Id::NId:=ALpha* Close?)
+	    ))
+
+	Output(Create::"v4refIndex.htm" To::Data) [GenerateIndex] Output(Close::Data)
+       )
+Eval [V4RefTableOfContents] > v4reftoc.htm
+
+[buildTitleHTM]
+ Do(XML::html
+    Do(XML::head Echo(XML::title "V4 Reference") Echo(XML::"base target='_self'"))
+    Do(XML::"body background='v4reflogobkg.jpg'"
+       Do(XML::"table width=100% height=100% style='vertical-align: middle'" XML::tr XML::td
+          Echo(XML::"p align='center'" XML::"font size='6'" "V4<sup>&#174;</sup> Reference")
+          Context::V4(Version?)
+          Echo(XML::"p align=center style='margin-bottom:-15'" "This reference reflects version " List.1 "." List.2 " of V4 (build as of " Format(List.3 Mask::"0d-mmm-yyyy"),UDate:{now} ")")
+          Echo(XML::"p align='center'" "<i>Data that thinks like us</i><sup>&#174;</sup>")
+          Echo(XML::"p align='center'" "Protected by U.S. Patent 6,470,490 MKS <sup><u>Inc.</u></sup> - 2003")
+          Echo(XML::"p align='center'" XML::i "(This manual was generated entirely by V4 from a V4 database.)")
+         )
+      )
+   )
+Eval [buildTitleHTM] > v4reftitle.htm   
+   
+Exit
+EndIf
+

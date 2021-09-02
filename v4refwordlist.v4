@@ -1,0 +1,22 @@
+/*	V4RefWordList - Creates a list of all words (tokens) within V4 Documentation */
+
+Include v4
+
+[V4RefWordList]
+ Do(Project(Logical:True NId..)
+    Enum(OSFile("englishwordlist.txt" ListOf?) @Project(Logical:False NId:=Alpha*))
+    Enum(IntMod.. @Project(Logical:False NId:=Str(IntMod*)))
+    Enum(Tag.. @Project(Logical:False NId:=Str(Tag*)))
+    Enum(OSFile("V4RefOKWordList.txt" ListOf?) @Project(Logical:False NId:=Alpha*))
+    Enum(OSFile("v4ref*.v4d" ListOf?)
+     @Tally(List(Area::Alpha*)
+	(Values::Str(Alpha* ListOf::" \t`~'\";:<>*-,().[]/\\|?{}#^@&=+!" Trim?) By::NId:=Alpha* ByList::WordList)))
+    If({ListSize([WordList]) = 0} Then::GuiAlert("No mispelings detected!")
+     Else::Do(Output(Create::"badwords.tmp" Id::bw)
+	      Sort([WordList] By::Str(NId* UC?) If::{Logical:=NId* & ~DefQ(Int:=NId*)} Do::Do(Counter(Next::Bad) Echo(Out::bw NId*)))
+	      Output(Id::bw Close?) GuiAlert("Check out " Counter(Count::Bad) " misspellings in badwords.tmp")))
+   )
+
+Eval [V4RefWordList]
+Exit
+
